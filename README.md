@@ -1,5 +1,14 @@
 # mp-game-server-sample-go
-[View this project in Backstage](https://backstage.corp.unity3d.com/catalog/default/component/mp-game-server-sample-go) <br/>
-# Converting to public repository
-Any and all Unity software of any description (including components) (1) whose source is to be made available other than under a Unity source code license or (2) in respect of which a public announcement is to be made concerning its inner workings, may be licensed and released only upon the prior approval of Legal.
-The process for that is to access, complete, and submit this [FORM](https://docs.google.com/forms/d/e/1FAIpQLSe3H6PARLPIkWVjdB_zMvuIuIVtrqNiGlEt1yshkMCmCMirvA/viewform).
+
+This repository represents a sample game server capable of running on the [Unity Multiplay platform](https://unity.com/products/multiplay).
+The [prebuilt releases](https://github.com/Unity-Technologies/mp-game-server-sample-go/releases) are ready for you to upload to Multiplay to try out the service without writing a single line of code!
+
+The capabilities of this sample are as follows:
+
+- Handling of [Multiplay allocation lifecycle](https://docs.unity.com/multiplay/Content/shared/allocation-flow.htm)
+  - Achieved by watching for file events on the provided configuration file
+  - When allocated, the sample starts a TCP server on the configured `Port` which listens for client connections
+  - When de-allocated, this TCP server is stopped
+- Dynamic server query results
+  - Data such as number of players, map name, etc. are handled appropriately
+  - `sqp` and `a2s` query protocols over the configured UDP `QueryPort`

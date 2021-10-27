@@ -1,0 +1,29 @@
+run:
+  concurrency: 4
+  deadline: 5m
+
+linters-settings:
+  cyclop:
+    max-complexity: 20
+  gocyclo:
+    min-complexity: 20
+
+linters:
+  enable-all: true
+  disable:
+    - exhaustive
+    - exhaustivestruct
+    - funlen
+    - gochecknoglobals
+    - gomoddirectives
+    - interfacer
+    - maligned
+    - gomnd
+    - nestif
+    - paralleltest
+    - scopelint
+    - testpackage
+    - tparallel
+    - wrapcheck
+    - wsl
+
