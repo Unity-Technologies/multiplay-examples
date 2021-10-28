@@ -111,5 +111,5 @@ func Test_watchConfig(t *testing.T) {
 		},
 	}, <-g.gameEvents)
 
-	require.NoError(t, g.Stop())
+	g.internalEvents <- closeInternalEventsProcessor
 }
