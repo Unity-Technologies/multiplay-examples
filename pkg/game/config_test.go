@@ -26,15 +26,11 @@ func Test_loadConfig(t *testing.T) {
 			fields: fields{
 				configContent: `{
 					"AllocationUUID": "alloc-uuid",
-					"Bind": ":8080",
-					"BindQuery": [":8081"],
 					"QueryProtocol": "sqp"
 				}`,
 			},
 			want: &config{
 				AllocationUUID: "alloc-uuid",
-				Bind:           ":8080",
-				BindQuery:      []string{":8081"},
 				QueryProtocol:  "sqp",
 			},
 		},
@@ -42,39 +38,13 @@ func Test_loadConfig(t *testing.T) {
 			name: "defaults to sqp",
 			fields: fields{
 				configContent: `{
-					"AllocationUUID": "alloc-uuid",
-					"Bind": ":8080",
-					"BindQuery": [":8081"]
+					"AllocationUUID": "alloc-uuid"
 				}`,
 			},
 			want: &config{
 				AllocationUUID: "alloc-uuid",
-				Bind:           ":8080",
-				BindQuery:      []string{":8081"},
 				QueryProtocol:  "sqp",
 			},
-		},
-		{
-			name: "requires BindQuery",
-			fields: fields{
-				configContent: `{
-					"AllocationUUID": "alloc-uuid",
-					"Bind": ":8080",
-					"QueryProtocol": "sqp"
-				}`,
-			},
-			wantErr: true,
-		},
-		{
-			name: "requires Bind",
-			fields: fields{
-				configContent: `{
-					"AllocationUUID": "alloc-uuid",
-					"BindQuery": [":8081"],
-					"QueryProtocol": "sqp"
-				}`,
-			},
-			wantErr: true,
 		},
 		{
 			name: "malformed json",
@@ -108,7 +78,7 @@ func Test_watchConfig(t *testing.T) {
 
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0600))
 
-	g, err := New(l, p)
+	g, err := New(l, p, 9000, 9001)
 	require.NoError(t, err)
 	require.NotNil(t, g)
 
@@ -118,16 +88,12 @@ func Test_watchConfig(t *testing.T) {
 	// Allocate
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
 		"AllocationUUID": "alloc-uuid",
-		"Bind": ":8080",
-		"BindQuery": [":8081"],
 		"MaxPlayers": 12
 	}`), 0600))
 	require.Equal(t, Event{
 		Type: gameAllocated,
 		Config: &config{
 			AllocationUUID: "alloc-uuid",
-			Bind:           ":8080",
-			BindQuery:      []string{":8081"},
 			MaxPlayers:     12,
 			QueryProtocol:  "sqp",
 		},
@@ -136,18 +102,14 @@ func Test_watchConfig(t *testing.T) {
 	// Deallocate
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
 		"AllocationUUID": "",
-		"Bind": ":8080",
-		"BindQuery": [":8081"],
 		"MaxPlayers": 0
 	}`), 0600))
 	require.Equal(t, Event{
 		Type: gameDeallocated,
 		Config: &config{
-			Bind:          ":8080",
-			BindQuery:     []string{":8081"},
 			QueryProtocol: "sqp",
 		},
 	}, <-g.gameEvents)
 
-	require.NoError(t, g.Stop())
+	g.internalEvents <- closeInternalEventsProcessor
 }

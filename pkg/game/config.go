@@ -16,12 +16,6 @@ type (
 		// AllocationUUID is the allocation ID provided to a game
 		AllocationUUID string
 
-		// Bind is the port to udpBinding to TCP game server to, e.g. "127.0.0.1:8080"
-		Bind string
-
-		// BindQuery is the address and port to bind to, e.g. "127.0.0.1:3075"
-		BindQuery []string
-
 		// ReadBuffer is the size of the UDP connection read buffer
 		ReadBuffer int
 
@@ -40,11 +34,6 @@ type (
 		// QueryProtocol determines the protocol used for query responses
 		QueryProtocol string
 	}
-)
-
-var (
-	ErrBindNotProvided      = errors.New("field Bind must be provided")
-	ErrBindQueryNotProvided = errors.New("field BindQuery must be provided")
 )
 
 // processInternalEvents processes internal events and watches the provided
@@ -144,14 +133,6 @@ func loadConfig(configFile string) (*config, error) {
 
 	if err = json.NewDecoder(f).Decode(&cfg); err != nil {
 		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	if len(cfg.Bind) == 0 {
-		return nil, ErrBindNotProvided
-	}
-
-	if len(cfg.BindQuery) == 0 {
-		return nil, ErrBindQueryNotProvided
 	}
 
 	if cfg.QueryProtocol == "" {

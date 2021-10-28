@@ -1,7 +1,5 @@
 {
   "AllocationUUID": "$$allocated_uuid$$",
-  "Bind": ":$$port$$",
-  "BindQuery": [":$$query_port$$"],
   "ReadBuffer": 40960,
   "WriteBuffer": 40960,
   "MaxPlayers": 4,
