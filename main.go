@@ -4,27 +4,39 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"path/filepath"
 
 	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/game"
 	"github.com/sirupsen/logrus"
 )
 
+// parseFlags parses the supported flags and returns the values supplied to these flags.
+func parseFlags(args []string) (config string, log string, port uint, queryPort uint, err error) {
+	var ip string
+	dir, _ := os.UserHomeDir()
+	f := flag.FlagSet{}
+
+	f.StringVar(&config, "config", filepath.Join(dir, "server.json"), "path to the config file to use")
+	f.StringVar(&log, "log", filepath.Join(dir, "logs"), "path to the log directory to write to")
+	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
+	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
+	f.StringVar(&ip, "ip", "", "unused: required for full platform support")
+	err = f.Parse(args)
+
+	return
+}
+
 func main() {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
-	config := ""
-	log := ""
-	f := flag.FlagSet{}
-	f.StringVar(&config, "config", "", "path to the config file to use")
-	f.StringVar(&log, "log", "", "path to the log file to write to")
-
-	if err := f.Parse(os.Args[1:]); err != nil {
+	config, log, port, queryPort, err := parseFlags(os.Args[1:])
+	if err != nil {
 		logger.Fatal("msg", "error parsing flags", "err", err.Error())
 	}
 
 	if log != "" {
-		logFile, err := os.OpenFile(log, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile(filepath.Join(log, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err == nil {
 			defer logFile.Close()
 			logger.Out = logFile
@@ -33,7 +45,7 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""), config)
+	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
 	if err != nil {
 		logger.Fatal("msg", "error creating game handler", "err", err.Error())
 	}

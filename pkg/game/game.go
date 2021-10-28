@@ -10,9 +10,9 @@ import (
 )
 
 type (
-	// Game .
+	// Game represents an instance of a game running on this server.
 	Game struct {
-		// cfgFile is the file path this game uses to read it's configuration from
+		// cfgFile is the file path this game uses to read its configuration from
 		cfgFile string
 
 		// clients is a map of connected game clients:
@@ -32,8 +32,14 @@ type (
 		// logger handles structured logging for this game
 		logger *logrus.Entry
 
-		// queryBinds is a slice of UDP endpoints which respond to game queries
-		queryBinds []*udpBinding
+		// port is the port number the game TCP server will listen on
+		port uint
+
+		// queryBind is a UDP endpoint which responds to game queries
+		queryBind *udpBinding
+
+		// queryPort is the port number the game query server will listen on
+		queryPort uint
 
 		// queryProto is an implementation of an interface which responds on a particular
 		// query format, for example sqp, tf2e, etc.
@@ -50,12 +56,14 @@ type (
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port uint, queryPort uint) (*Game, error) {
 	g := &Game{
 		cfgFile:        configPath,
 		gameEvents:     make(chan Event, 1),
 		logger:         logger,
 		internalEvents: make(chan InternalEvent, 1),
+		port:           port,
+		queryPort:      queryPort,
 	}
 
 	return g, nil
@@ -77,7 +85,8 @@ func (g *Game) Start() error {
 	<-g.internalEvents
 
 	g.logger.
-		WithField("bind", c.Bind).
+		WithField("port", g.port).
+		WithField("queryport", g.queryPort).
 		WithField("proto", c.QueryProtocol).
 		Info("server started")
 
@@ -95,8 +104,9 @@ func (g *Game) Start() error {
 // Stop stops the game and closes all connections.
 func (g *Game) Stop() error {
 	g.logger.Info("stopping")
-	for i := range g.queryBinds {
-		g.queryBinds[i].Done()
+
+	if g.queryBind != nil {
+		g.queryBind.Done()
 	}
 
 	g.gameEvents <- Event{Type: gameDeallocated}

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -54,13 +53,12 @@ func (g *Game) processEvents() {
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(c *config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
-	port, _ := strconv.Atoi(c.Bind[1:])
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
 		ServerName: fmt.Sprintf("r2 - %s", c.AllocationUUID),
 		GameType:   "r2-demo-game",
 		Map:        c.Map,
-		Port:       uint16(port),
+		Port:       uint16(g.port),
 	}
 
 	if err := g.switchQueryProtocol(*c); err != nil {
@@ -71,7 +69,7 @@ func (g *Game) allocated(c *config) {
 		return
 	}
 
-	go g.launchGame(*c)
+	go g.launchGame()
 }
 
 // deallocated stops the currently running game, if one is running.
@@ -99,9 +97,9 @@ func (g *Game) deallocated(c *config) {
 
 // launchGame launches a TCP server which listens for connections. Data sent by clients
 // is discarded.
-func (g *Game) launchGame(c config) {
+func (g *Game) launchGame() {
 	g.logger.Info("allocated")
-	addr, err := net.ResolveTCPAddr("tcp4", c.Bind)
+	addr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", g.port))
 	if err != nil {
 		g.logger.
 			WithField("error", err.Error()).
@@ -200,32 +198,28 @@ func (g *Game) switchQueryProtocol(c config) error {
 		return err
 	}
 
-	return g.restartQueryEndpoints(c)
+	return g.restartQueryEndpoint(c)
 }
 
-// restartQueryEndpoints restarts the query endpoints onto the new endpoints specified in the configuration.
-func (g *Game) restartQueryEndpoints(c config) error {
-	for i := range g.queryBinds {
-		g.queryBinds[i].Done()
+// restartQueryEndpoint restarts the query endpoint to support a potential change of query protocol in the
+// configuration.
+func (g *Game) restartQueryEndpoint(c config) error {
+	if g.queryBind != nil {
+		g.queryBind.Done()
 	}
 
-	g.queryBinds = make([]*udpBinding, len(c.BindQuery))
-	for i, addr := range c.BindQuery {
-		var err error
-		if g.queryBinds[i], err = newUDPBinding(addr); err != nil {
-			return err
-		}
+	var err error
+	if g.queryBind, err = newUDPBinding(fmt.Sprintf(":%d", g.queryPort)); err != nil {
+		return err
 	}
 
-	for i := range g.queryBinds {
-		go handleQuery(
-			g.queryProto,
-			g.logger,
-			&g.wg,
-			g.queryBinds[i],
-			c.ReadBuffer,
-		)
-	}
+	go handleQuery(
+		g.queryProto,
+		g.logger,
+		&g.wg,
+		g.queryBind,
+		c.ReadBuffer,
+	)
 
 	return nil
 }

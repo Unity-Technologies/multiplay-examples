@@ -40,7 +40,7 @@ func (b *udpBinding) Done() {
 	}
 }
 
-// IsDone determines whether or not the binding is complete.
+// IsDone determines whether the binding is complete.
 func (b udpBinding) IsDone() bool {
 	return atomic.LoadInt32(&b.done) == 1
 }
