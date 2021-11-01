@@ -55,8 +55,8 @@ func (g *Game) allocated(c *config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("r2 - %s", c.AllocationUUID),
-		GameType:   "r2-demo-game",
+		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocationUUID),
+		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
 	}
@@ -142,24 +142,23 @@ func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 		return nil, err
 	}
 
-	if err := client.SetDeadline(time.Now().Add(1 * time.Minute)); err != nil {
+	if err := client.SetDeadline(time.Now().Add(2 * time.Minute)); err != nil {
 		return nil, err
 	}
 
 	g.clients.Store(client.RemoteAddr(), client)
-	atomic.AddInt32(&g.state.CurrentPlayers, 1)
-	g.logger.Infof("connected: %s", client.RemoteAddr())
+	currentPlayers := atomic.AddInt32(&g.state.CurrentPlayers, 1)
+	g.logger.Infof("connected: %s, players: %d", client.RemoteAddr(), currentPlayers)
 
 	return client, nil
 }
 
-// handleClient handles a interaction with one client
-// connection.
+// handleClient handles an interaction with one client connection.
 func (g *Game) handleClient(client *net.TCPConn) {
 	defer func() {
 		g.clients.Delete(client.RemoteAddr())
-		atomic.AddInt32(&g.state.CurrentPlayers, -1)
-		g.logger.Infof("disconnected: %s", client.RemoteAddr())
+		currentPlayers := atomic.AddInt32(&g.state.CurrentPlayers, -1)
+		g.logger.Infof("disconnected: %s, players: %d", client.RemoteAddr(), currentPlayers)
 	}()
 	for {
 		buf := make([]byte, 16)
