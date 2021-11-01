@@ -3,6 +3,7 @@ package a2s
 import (
 	"bytes"
 	"runtime"
+	"sync/atomic"
 
 	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto"
 )
@@ -72,7 +73,7 @@ func (q *QueryResponder) handleInfoRequest() ([]byte, error) {
 	if q.state != nil {
 		f.ServerName = q.state.ServerName
 		f.GameMap = q.state.Map
-		f.PlayerCount = byte(q.state.CurrentPlayers)
+		f.PlayerCount = byte(atomic.LoadInt32(&q.state.CurrentPlayers))
 		f.MaxPlayers = byte(q.state.MaxPlayers)
 		f.GameName = q.state.GameType
 	}

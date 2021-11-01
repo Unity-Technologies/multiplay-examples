@@ -1,6 +1,8 @@
 package sqp
 
 import (
+	"sync/atomic"
+
 	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto"
 )
 
@@ -23,7 +25,7 @@ func queryStateToServerInfo(qs *proto.QueryState) sqpServerInfo {
 	}
 
 	return sqpServerInfo{
-		CurrentPlayers: uint16(qs.CurrentPlayers),
+		CurrentPlayers: uint16(atomic.LoadInt32(&qs.CurrentPlayers)),
 		MaxPlayers:     uint16(qs.MaxPlayers),
 		ServerName:     qs.ServerName,
 		GameType:       qs.GameType,
