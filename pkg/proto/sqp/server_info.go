@@ -21,7 +21,11 @@ type (
 // queryStateToServerInfo converts proto.QueryState to sqpServerInfo.
 func queryStateToServerInfo(qs *proto.QueryState) sqpServerInfo {
 	if qs == nil {
-		return sqpServerInfo{}
+		return sqpServerInfo{
+			ServerName: "n/a",
+			GameType:   "n/a",
+			GameMap:    "n/a",
+		}
 	}
 
 	return sqpServerInfo{
