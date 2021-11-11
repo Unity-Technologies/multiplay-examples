@@ -12,3 +12,6 @@ The capabilities of this sample are as follows:
 - Dynamic server query results
   - Data such as number of players, map name, etc. are handled appropriately
   - `sqp` and `a2s` query protocols over the configured UDP `QueryPort`
+
+---
+_Disclaimer: The repo owners will not (cannot) accept pull requests, GitHub review requests, or any other GitHub-hosted issue management requests._
