@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/game"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/game"
 	"github.com/sirupsen/logrus"
 )
 

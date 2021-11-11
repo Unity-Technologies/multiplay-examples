@@ -1,4 +1,4 @@
-module github.com/Unity-Technologies/mp-game-server-sample-go
+module github.com/Unity-Technologies/multiplay-examples/simple-game-server-go
 
 go 1.17
 

@@ -1,3 +1,4 @@
+project_name: simple-game-server-go
 before:
   hooks:
     - go mod tidy

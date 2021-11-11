@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto"
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto/a2s"
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto/sqp"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
 )
 
 type (
