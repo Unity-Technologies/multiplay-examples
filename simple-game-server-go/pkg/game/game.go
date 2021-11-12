@@ -56,7 +56,7 @@ type (
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port uint, queryPort uint) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
 	g := &Game{
 		cfgFile:        configPath,
 		gameEvents:     make(chan Event, 1),
@@ -76,12 +76,14 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	if err := g.switchQueryProtocol(*c); err != nil {
+	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
 	go g.processEvents()
 	go g.processInternalEvents()
+
+	// Wait until the internal event processor is ready.
 	<-g.internalEvents
 
 	g.logger.
@@ -93,7 +95,7 @@ func (g *Game) Start() error {
 	// Handle the app starting with an allocation
 	if c.AllocationUUID != "" {
 		g.gameEvents <- Event{
-			Type:   gameAllocated,
+			Type:   Allocated,
 			Config: c,
 		}
 	}
@@ -109,7 +111,7 @@ func (g *Game) Stop() error {
 		g.queryBind.Done()
 	}
 
-	g.gameEvents <- Event{Type: gameDeallocated}
+	g.gameEvents <- Event{Type: Deallocated}
 	g.internalEvents <- closeInternalEventsProcessor
 	g.wg.Wait()
 	g.logger.Info("stopped")

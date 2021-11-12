@@ -91,7 +91,7 @@ func Test_watchConfig(t *testing.T) {
 		"MaxPlayers": 12
 	}`), 0600))
 	require.Equal(t, Event{
-		Type: gameAllocated,
+		Type: Allocated,
 		Config: &config{
 			AllocationUUID: "alloc-uuid",
 			MaxPlayers:     12,
@@ -105,7 +105,7 @@ func Test_watchConfig(t *testing.T) {
 		"MaxPlayers": 0
 	}`), 0600))
 	require.Equal(t, Event{
-		Type: gameDeallocated,
+		Type: Deallocated,
 		Config: &config{
 			QueryProtocol: "sqp",
 		},

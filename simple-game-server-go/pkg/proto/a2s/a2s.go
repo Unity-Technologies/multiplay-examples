@@ -9,6 +9,7 @@ import (
 )
 
 type (
+	// QueryResponder implements proto.QueryResponder for the A2S protocol.
 	QueryResponder struct {
 		enc   *encoder
 		state *proto.QueryState
@@ -40,7 +41,7 @@ var (
 
 // NewQueryResponder returns creates a new responder capable of responding
 // to a2s-formatted queries.
-func NewQueryResponder(state *proto.QueryState) (proto.QueryResponder, error) {
+func NewQueryResponder(state *proto.QueryState) (*QueryResponder, error) {
 	q := &QueryResponder{
 		enc:   &encoder{},
 		state: state,
@@ -55,7 +56,7 @@ func (q *QueryResponder) Respond(_ string, buf []byte) ([]byte, error) {
 		return q.handleInfoRequest()
 	}
 
-	return nil, NewErrUnsupportedQuery(buf[0:5])
+	return nil, NewUnsupportedQueryError(buf[0:5])
 }
 
 func (q *QueryResponder) handleInfoRequest() ([]byte, error) {

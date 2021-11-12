@@ -14,9 +14,16 @@ import (
 )
 
 type (
-	EventType     = int
-	InternalEvent = int
+	// EventType is a type of Multiplay game server lifecycle event.
+	EventType int
 
+	// InternalEvent represents an event internal to the game loop.
+	//
+	// TODO(dr): Consider moving to an internal package if not intended to be
+	// exposed.
+	InternalEvent int
+
+	// Event represents a Multiplay game server lifecycle event.
 	Event struct {
 		Type   EventType
 		Config *config
@@ -24,8 +31,13 @@ type (
 )
 
 const (
-	gameAllocated = EventType(iota)
-	gameDeallocated
+	// Allocated indicates that a matchmaker has requested a game server from
+	// Multiplay and this one has been chosen to host a match.
+	Allocated = EventType(iota)
+
+	// Deallocated indicates that the matchmaker no longer requires this game
+	// server to host a match.
+	Deallocated
 )
 
 const (
@@ -41,10 +53,10 @@ func (g *Game) processEvents() {
 
 	for ev := range g.gameEvents {
 		switch ev.Type {
-		case gameAllocated:
+		case Allocated:
 			g.allocated(ev.Config)
 
-		case gameDeallocated:
+		case Deallocated:
 			g.deallocated(ev.Config)
 		}
 	}
@@ -165,6 +177,9 @@ func (g *Game) handleClient(client *net.TCPConn) {
 		if _, err := client.Read(buf); err != nil {
 			return
 		}
+
+		// TODO(dr): Echo packet back to the client? Just something to demo
+		// that the server can communicate outward?
 	}
 }
 
@@ -197,6 +212,9 @@ func (g *Game) switchQueryProtocol(c config) error {
 		return err
 	}
 
+	// TODO(dr): Not sure how valuable dynamically switching query protocol is.
+	// Not sure how many games IRL are doing this. For a simple demo app like
+	// this, IMO not worth the complexity.
 	return g.restartQueryEndpoint(c)
 }
 

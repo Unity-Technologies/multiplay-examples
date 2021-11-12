@@ -32,6 +32,7 @@ func newUDPBinding(bindAddress string) (*udpBinding, error) {
 
 // Done marks the binding as complete, closing any open connections.
 func (b *udpBinding) Done() {
+	// TODO(dr): Use a chan struct{} instead of atomics?
 	atomic.StoreInt32(&b.done, 1)
 
 	if b.conn != nil {

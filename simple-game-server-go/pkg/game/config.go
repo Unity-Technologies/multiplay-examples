@@ -48,6 +48,9 @@ func (g *Game) processInternalEvents() {
 	g.internalEvents <- internalEventsProcessorReady
 	defer g.wg.Done()
 
+	// TODO(dr): Maybe a little hard to parse as the select is fulfilling 3 use
+	// cases (file events, error handling and internal events).
+	// Consider splitting up.
 	for {
 		select {
 		case event, ok := <-w.Events:
@@ -65,13 +68,11 @@ func (g *Game) processInternalEvents() {
 				if err != nil {
 					// Multiplay truncates the file when a deallocation occurs, which results in two writes.
 					// The first write will produce an empty file, meaning JSON parsing will fail.
-					if errors.Is(err, io.EOF) {
-						continue
+					if !errors.Is(err, io.EOF) {
+						g.logger.
+							WithField("error", err.Error()).
+							Error("error loading config")
 					}
-
-					g.logger.
-						WithField("error", err.Error()).
-						Error("error loading config")
 
 					continue
 				}
@@ -108,12 +109,12 @@ func (g *Game) processInternalEvents() {
 func (g *Game) triggerAllocationEvents(c *config) {
 	if c.AllocationUUID != "" {
 		g.gameEvents <- Event{
-			Type:   gameAllocated,
+			Type:   Allocated,
 			Config: c,
 		}
 	} else {
 		g.gameEvents <- Event{
-			Type:   gameDeallocated,
+			Type:   Deallocated,
 			Config: c,
 		}
 	}

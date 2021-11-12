@@ -38,7 +38,7 @@ type (
 
 // NewQueryResponder returns creates a new responder capable of responding
 // to SQP-formatted queries.
-func NewQueryResponder(state *proto.QueryState) (proto.QueryResponder, error) {
+func NewQueryResponder(state *proto.QueryState) (*QueryResponder, error) {
 	q := &QueryResponder{
 		enc:   &encoder{},
 		state: state,
@@ -113,7 +113,7 @@ func (q *QueryResponder) handleQuery(clientAddress string, buf []byte) ([]byte, 
 	}
 
 	if binary.BigEndian.Uint16(buf[5:7]) != 1 {
-		return nil, NewErrUnsupportedSQPVersion(int8(buf[6]))
+		return nil, NewUnsupportedSQPVersionError(int8(buf[6]))
 	}
 
 	requestedChunks := buf[7]

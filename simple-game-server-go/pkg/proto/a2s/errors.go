@@ -3,20 +3,20 @@ package a2s
 import "fmt"
 
 type (
-	// ErrUnsupportedQuery is an error which represents an invalid SQP query header.
-	ErrUnsupportedQuery struct {
+	// UnsupportedQueryError is an error which represents an invalid SQP query header.
+	UnsupportedQueryError struct {
 		header []byte
 	}
 )
 
-// NewErrUnsupportedQuery returns a new instance of ErrUnsupportedQuery.
-func NewErrUnsupportedQuery(header []byte) error {
-	return &ErrUnsupportedQuery{
+// NewUnsupportedQueryError returns a new instance of UnsupportedQueryError.
+func NewUnsupportedQueryError(header []byte) error {
+	return &UnsupportedQueryError{
 		header: header,
 	}
 }
 
 // Error returns the error string.
-func (e *ErrUnsupportedQuery) Error() string {
+func (e *UnsupportedQueryError) Error() string {
 	return fmt.Sprintf("unsupported query: %x", e.header)
 }
