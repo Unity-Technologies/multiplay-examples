@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/sirupsen/logrus"
 )
 

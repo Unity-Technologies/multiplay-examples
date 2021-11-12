@@ -3,7 +3,7 @@ package sqp
 import (
 	"sync/atomic"
 
-	"github.com/Unity-Technologies/mp-game-server-sample-go/pkg/proto"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 )
 
 type (

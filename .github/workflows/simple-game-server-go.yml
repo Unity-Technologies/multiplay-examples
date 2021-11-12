@@ -1,4 +1,4 @@
-name: build-and-release
+name: simple-game-server-go
 on:
   pull_request:
   push:
@@ -7,6 +7,9 @@ permissions:
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: './simple-game-server-go'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,6 +23,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.39.0
+          working-directory: './simple-game-server-go'
       - name: Build
         uses: goreleaser/goreleaser-action@v2
         if: startsWith(github.ref, 'refs/tags/') == false
@@ -27,16 +31,18 @@ jobs:
           distribution: goreleaser
           version: latest
           args: build --rm-dist --snapshot
+          workdir: './simple-game-server-go'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
         run: 'go test -timeout=5m -race -v ./...'
       - name: Release
         uses: goreleaser/goreleaser-action@v2
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ startsWith(github.ref, 'refs/tags/') && endsWith(github.ref, '-simple-game-server-go') }}
         with:
           distribution: goreleaser
           version: latest
           args: release --rm-dist
+          workdir: './simple-game-server-go'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
