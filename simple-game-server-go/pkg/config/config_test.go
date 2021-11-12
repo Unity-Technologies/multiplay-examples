@@ -1,4 +1,4 @@
-package game
+package config
 
 import (
 	"io/ioutil"
@@ -6,11 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
-func Test_loadConfig(t *testing.T) {
+func Test_NewConfigFromFile(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		configContent string
@@ -18,7 +17,7 @@ func Test_loadConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *config
+		want    *Config
 		wantErr bool
 	}{
 		{
@@ -29,7 +28,7 @@ func Test_loadConfig(t *testing.T) {
 					"QueryProtocol": "sqp"
 				}`,
 			},
-			want: &config{
+			want: &Config{
 				AllocationUUID: "alloc-uuid",
 				QueryProtocol:  "sqp",
 			},
@@ -41,7 +40,7 @@ func Test_loadConfig(t *testing.T) {
 					"AllocationUUID": "alloc-uuid"
 				}`,
 			},
-			want: &config{
+			want: &Config{
 				AllocationUUID: "alloc-uuid",
 				QueryProtocol:  "sqp",
 			},
@@ -59,7 +58,7 @@ func Test_loadConfig(t *testing.T) {
 			f := path.Join(t.TempDir(), "config.json")
 			require.NoError(t, ioutil.WriteFile(f, []byte(tt.fields.configContent), 0600))
 
-			got, err := loadConfig(f)
+			got, err := NewConfigFromFile(f)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("loadConfig() error = %v, wantErr %v", err, tt.wantErr)
 
@@ -70,46 +69,4 @@ func Test_loadConfig(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_watchConfig(t *testing.T) {
-	l := logrus.NewEntry(logrus.New())
-	p := path.Join(t.TempDir(), "config.json")
-
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0600))
-
-	g, err := New(l, p, 9000, 9001)
-	require.NoError(t, err)
-	require.NotNil(t, g)
-
-	go g.processInternalEvents()
-	<-g.internalEvents
-
-	// Allocate
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{
-		"AllocationUUID": "alloc-uuid",
-		"MaxPlayers": 12
-	}`), 0600))
-	require.Equal(t, Event{
-		Type: gameAllocated,
-		Config: &config{
-			AllocationUUID: "alloc-uuid",
-			MaxPlayers:     12,
-			QueryProtocol:  "sqp",
-		},
-	}, <-g.gameEvents)
-
-	// Deallocate
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{
-		"AllocationUUID": "",
-		"MaxPlayers": 0
-	}`), 0600))
-	require.Equal(t, Event{
-		Type: gameDeallocated,
-		Config: &config{
-			QueryProtocol: "sqp",
-		},
-	}, <-g.gameEvents)
-
-	g.internalEvents <- closeInternalEventsProcessor
 }

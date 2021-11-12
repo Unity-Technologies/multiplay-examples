@@ -28,6 +28,6 @@ func Test_BindLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 
-	b.Done()
+	b.Close()
 	require.True(t, b.IsDone())
 }

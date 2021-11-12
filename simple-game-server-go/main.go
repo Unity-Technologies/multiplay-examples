@@ -5,8 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"syscall"
 
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/game"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/game"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,7 +33,7 @@ func main() {
 
 	config, log, port, queryPort, err := parseFlags(os.Args[1:])
 	if err != nil {
-		logger.Fatal("msg", "error parsing flags", "err", err.Error())
+		logger.WithError(err).Fatal("error parsing flags")
 	}
 
 	if log != "" {
@@ -41,21 +42,24 @@ func main() {
 			defer logFile.Close()
 			logger.Out = logFile
 		} else {
-			logger.Warningf("could not open log file for writing: %s", err.Error())
+			logger.WithError(err).Warning("could not open log file for writing")
 		}
 	}
 
 	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
 	if err != nil {
-		logger.Fatal("msg", "error creating game handler", "err", err.Error())
+		logger.WithError(err).Fatal("error creating game handler")
 	}
 
 	if err = g.Start(); err != nil {
-		logger.Fatal("msg", "unable to start game", "err", err.Error())
+		logger.WithError(err).Fatal("unable to start game")
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	// The Multiplay process management daemon will signal the game server to
+	// stop. A graceful stop signal (SIGTERM) will be sent if the game server
+	// fleet has been configured to support it.
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	_ = g.Stop()
 }

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/sirupsen/logrus"
 )
@@ -21,13 +23,18 @@ type (
 		clients sync.Map
 
 		// gameEvents is a channel of game events, for example allocated / deallocated
-		gameEvents chan Event
+		gameEvents chan event.Event
 
 		// gameBind is a TCP listener representing a fake game server
 		gameBind *net.TCPListener
 
-		// internalEvents is a channel of internal events, for example internalEventsProcessorReady
-		internalEvents chan InternalEvent
+		// internalEventProcessorReady is a channel that, when written to,
+		// indicates that the internal event processor is ready.
+		internalEventProcessorReady chan struct{}
+
+		// done is a channel that when closed indicates the server is going
+		// away.
+		done chan struct{}
 
 		// logger handles structured logging for this game
 		logger *logrus.Entry
@@ -56,14 +63,15 @@ type (
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port uint, queryPort uint) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
 	g := &Game{
-		cfgFile:        configPath,
-		gameEvents:     make(chan Event, 1),
-		logger:         logger,
-		internalEvents: make(chan InternalEvent, 1),
-		port:           port,
-		queryPort:      queryPort,
+		cfgFile:                     configPath,
+		gameEvents:                  make(chan event.Event, 1),
+		logger:                      logger,
+		internalEventProcessorReady: make(chan struct{}, 1),
+		done:                        make(chan struct{}, 1),
+		port:                        port,
+		queryPort:                   queryPort,
 	}
 
 	return g, nil
@@ -71,18 +79,20 @@ func New(logger *logrus.Entry, configPath string, port uint, queryPort uint) (*G
 
 // Start starts the game, opening the configured query and game ports.
 func (g *Game) Start() error {
-	c, err := loadConfig(g.cfgFile)
+	c, err := config.NewConfigFromFile(g.cfgFile)
 	if err != nil {
 		return err
 	}
 
-	if err := g.switchQueryProtocol(*c); err != nil {
+	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
 	go g.processEvents()
 	go g.processInternalEvents()
-	<-g.internalEvents
+
+	// Wait until the internal event processor is ready.
+	<-g.internalEventProcessorReady
 
 	g.logger.
 		WithField("port", g.port).
@@ -92,8 +102,8 @@ func (g *Game) Start() error {
 
 	// Handle the app starting with an allocation
 	if c.AllocationUUID != "" {
-		g.gameEvents <- Event{
-			Type:   gameAllocated,
+		g.gameEvents <- event.Event{
+			Type:   event.Allocated,
 			Config: c,
 		}
 	}
@@ -106,11 +116,11 @@ func (g *Game) Stop() error {
 	g.logger.Info("stopping")
 
 	if g.queryBind != nil {
-		g.queryBind.Done()
+		g.queryBind.Close()
 	}
 
-	g.gameEvents <- Event{Type: gameDeallocated}
-	g.internalEvents <- closeInternalEventsProcessor
+	g.gameEvents <- event.Event{Type: event.Deallocated}
+	close(g.done)
 	g.wg.Wait()
 	g.logger.Info("stopped")
 

@@ -8,29 +8,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
-)
-
-type (
-	EventType     = int
-	InternalEvent = int
-
-	Event struct {
-		Type   EventType
-		Config *config
-	}
-)
-
-const (
-	gameAllocated = EventType(iota)
-	gameDeallocated
-)
-
-const (
-	internalEventsProcessorReady = InternalEvent(iota)
-	closeInternalEventsProcessor
 )
 
 // processEvents handles processing events for the operation of the
@@ -41,17 +23,17 @@ func (g *Game) processEvents() {
 
 	for ev := range g.gameEvents {
 		switch ev.Type {
-		case gameAllocated:
+		case event.Allocated:
 			g.allocated(ev.Config)
 
-		case gameDeallocated:
+		case event.Deallocated:
 			g.deallocated(ev.Config)
 		}
 	}
 }
 
 // allocated starts a game after the server has been allocated.
-func (g *Game) allocated(c *config) {
+func (g *Game) allocated(c *config.Config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
@@ -73,7 +55,7 @@ func (g *Game) allocated(c *config) {
 }
 
 // deallocated stops the currently running game, if one is running.
-func (g *Game) deallocated(c *config) {
+func (g *Game) deallocated(c *config.Config) {
 	g.disconnectAllClients()
 
 	if g.gameBind != nil {
@@ -165,6 +147,12 @@ func (g *Game) handleClient(client *net.TCPConn) {
 		if _, err := client.Read(buf); err != nil {
 			return
 		}
+
+		// Echo the packet back to the client, just to demonstrate that 2-way
+		// communication is working.
+		if _, err := client.Write(buf); err != nil {
+			return
+		}
 	}
 }
 
@@ -184,7 +172,7 @@ func (g *Game) disconnectAllClients() {
 
 // switchQueryProtocol switches to a query protocol specified in the configuration.
 // The query binding endpoints are restarted to serve on this endpoint.
-func (g *Game) switchQueryProtocol(c config) error {
+func (g *Game) switchQueryProtocol(c config.Config) error {
 	var err error
 	switch c.QueryProtocol {
 	case "a2s":
@@ -202,9 +190,9 @@ func (g *Game) switchQueryProtocol(c config) error {
 
 // restartQueryEndpoint restarts the query endpoint to support a potential change of query protocol in the
 // configuration.
-func (g *Game) restartQueryEndpoint(c config) error {
+func (g *Game) restartQueryEndpoint(c config.Config) error {
 	if g.queryBind != nil {
-		g.queryBind.Done()
+		g.queryBind.Close()
 	}
 
 	var err error

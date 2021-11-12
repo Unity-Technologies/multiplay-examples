@@ -6,8 +6,8 @@ import (
 )
 
 type (
-	// ErrUnsupportedSQPVersion is an error which represents an invalid SQP version provided to the reader.
-	ErrUnsupportedSQPVersion struct {
+	// UnsupportedSQPVersionError is an error which represents an invalid SQP version provided to the reader.
+	UnsupportedSQPVersionError struct {
 		version int8
 	}
 )
@@ -19,14 +19,14 @@ var (
 	ErrUnsupportedQuery    = errors.New("unsupported query")
 )
 
-// NewErrUnsupportedSQPVersion returns a new instance of ErrUnsupportedSQPVersion.
-func NewErrUnsupportedSQPVersion(version int8) error {
-	return &ErrUnsupportedSQPVersion{
+// NewUnsupportedSQPVersionError returns a new instance of UnsupportedSQPVersionError.
+func NewUnsupportedSQPVersionError(version int8) error {
+	return &UnsupportedSQPVersionError{
 		version: version,
 	}
 }
 
 // Error returns the error string.
-func (e *ErrUnsupportedSQPVersion) Error() string {
+func (e *UnsupportedSQPVersionError) Error() string {
 	return fmt.Sprintf("unsupported sqp version: %d", e.version)
 }
