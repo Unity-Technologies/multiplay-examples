@@ -1,11 +1,8 @@
 package game
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
@@ -42,7 +39,7 @@ func (g *Game) processInternalEvents() {
 				continue
 			}
 
-			c, err := loadConfig(g.cfgFile)
+			c, err := config.NewConfigFromFile(g.cfgFile)
 			if err != nil {
 				// Multiplay truncates the file when a deallocation occurs,
 				// which results in two writes. The first write will produce an
@@ -90,27 +87,4 @@ func (g *Game) triggerAllocationEvents(c *config.Config) {
 			Config: c,
 		}
 	}
-}
-
-// loadConfig loads configuration from the specified file
-// and validates its contents.
-func loadConfig(configFile string) (*config.Config, error) {
-	var cfg *config.Config
-
-	f, err := os.Open(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file: %w", err)
-	}
-
-	defer f.Close()
-
-	if err = json.NewDecoder(f).Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("error decoding json: %w", err)
-	}
-
-	if cfg.QueryProtocol == "" {
-		cfg.QueryProtocol = "sqp"
-	}
-
-	return cfg, nil
 }

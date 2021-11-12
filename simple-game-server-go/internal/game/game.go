@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/sirupsen/logrus"
@@ -78,7 +79,7 @@ func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, 
 
 // Start starts the game, opening the configured query and game ports.
 func (g *Game) Start() error {
-	c, err := loadConfig(g.cfgFile)
+	c, err := config.NewConfigFromFile(g.cfgFile)
 	if err != nil {
 		return err
 	}
@@ -115,7 +116,7 @@ func (g *Game) Stop() error {
 	g.logger.Info("stopping")
 
 	if g.queryBind != nil {
-		g.queryBind.Done()
+		g.queryBind.Close()
 	}
 
 	g.gameEvents <- event.Event{Type: event.Deallocated}

@@ -28,11 +28,10 @@ func newUDPBinding(bindAddress string) (*udpBinding, error) {
 	}, nil
 }
 
-// Done marks the binding as complete, closing any open connections.
-func (b *udpBinding) Done() {
-	close(b.done)
-
+// Close marks the binding as complete, closing any open connections.
+func (b *udpBinding) Close() {
 	if b.conn != nil {
+		close(b.done)
 		b.conn.Close()
 		b.conn = nil
 	}
