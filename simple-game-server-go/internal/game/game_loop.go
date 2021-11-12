@@ -8,66 +8,36 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
 )
 
-type (
-	// EventType is a type of Multiplay game server lifecycle event.
-	EventType int
-
-	// InternalEvent represents an event internal to the game loop.
-	//
-	// TODO(dr): Consider moving to an internal package if not intended to be
-	// exposed.
-	InternalEvent int
-
-	// Event represents a Multiplay game server lifecycle event.
-	Event struct {
-		Type   EventType
-		Config *config
-	}
-)
-
-const (
-	// Allocated indicates that a matchmaker has requested a game server from
-	// Multiplay and this one has been chosen to host a match.
-	Allocated = EventType(iota)
-
-	// Deallocated indicates that the matchmaker no longer requires this game
-	// server to host a match.
-	Deallocated
-)
-
-const (
-	internalEventsProcessorReady = InternalEvent(iota)
-	closeInternalEventsProcessor
-)
-
 // processEvents handles processing events for the operation of the
-// game server, such as allocating and deallocating the server.
+// event server, such as allocating and deallocating the server.
 func (g *Game) processEvents() {
 	g.wg.Add(1)
 	defer g.wg.Done()
 
 	for ev := range g.gameEvents {
 		switch ev.Type {
-		case Allocated:
+		case event.Allocated:
 			g.allocated(ev.Config)
 
-		case Deallocated:
+		case event.Deallocated:
 			g.deallocated(ev.Config)
 		}
 	}
 }
 
-// allocated starts a game after the server has been allocated.
-func (g *Game) allocated(c *config) {
+// allocated starts an event after the server has been allocated.
+func (g *Game) allocated(c *config.Config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocationUUID),
+		ServerName: fmt.Sprintf("mp-event-server-sample-go - %s", c.AllocationUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
@@ -84,8 +54,8 @@ func (g *Game) allocated(c *config) {
 	go g.launchGame()
 }
 
-// deallocated stops the currently running game, if one is running.
-func (g *Game) deallocated(c *config) {
+// deallocated stops the currently running event, if one is running.
+func (g *Game) deallocated(c *config.Config) {
 	g.disconnectAllClients()
 
 	if g.gameBind != nil {
@@ -178,12 +148,15 @@ func (g *Game) handleClient(client *net.TCPConn) {
 			return
 		}
 
-		// TODO(dr): Echo packet back to the client? Just something to demo
-		// that the server can communicate outward?
+		// Echo the packet back to the client, just to demonstrate that 2-way
+		// communication is working.
+		if _, err := client.Write(buf); err != nil {
+			return
+		}
 	}
 }
 
-// disconnectAllClients disconnects all remaining clients connected to the game server.
+// disconnectAllClients disconnects all remaining clients connected to the event server.
 func (g *Game) disconnectAllClients() {
 	g.clients.Range(func(key interface{}, value interface{}) bool {
 		client, ok := value.(*net.TCPConn)
@@ -199,7 +172,7 @@ func (g *Game) disconnectAllClients() {
 
 // switchQueryProtocol switches to a query protocol specified in the configuration.
 // The query binding endpoints are restarted to serve on this endpoint.
-func (g *Game) switchQueryProtocol(c config) error {
+func (g *Game) switchQueryProtocol(c config.Config) error {
 	var err error
 	switch c.QueryProtocol {
 	case "a2s":
@@ -212,15 +185,12 @@ func (g *Game) switchQueryProtocol(c config) error {
 		return err
 	}
 
-	// TODO(dr): Not sure how valuable dynamically switching query protocol is.
-	// Not sure how many games IRL are doing this. For a simple demo app like
-	// this, IMO not worth the complexity.
 	return g.restartQueryEndpoint(c)
 }
 
 // restartQueryEndpoint restarts the query endpoint to support a potential change of query protocol in the
 // configuration.
-func (g *Game) restartQueryEndpoint(c config) error {
+func (g *Game) restartQueryEndpoint(c config.Config) error {
 	if g.queryBind != nil {
 		g.queryBind.Done()
 	}

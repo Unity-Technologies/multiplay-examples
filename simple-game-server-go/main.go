@@ -5,8 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"syscall"
 
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/game"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/game"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,7 @@ func parseFlags(args []string) (config string, log string, port uint, queryPort 
 
 	f.StringVar(&config, "config", filepath.Join(dir, "server.json"), "path to the config file to use")
 	f.StringVar(&log, "log", filepath.Join(dir, "logs"), "path to the log directory to write to")
-	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
+	f.UintVar(&port, "port", 8000, "port for the event server to bind to")
 	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
 	f.StringVar(&ip, "ip", "", "unused: required for full platform support")
 	err = f.Parse(args)
@@ -32,7 +33,7 @@ func main() {
 
 	config, log, port, queryPort, err := parseFlags(os.Args[1:])
 	if err != nil {
-		logger.Fatal("msg", "error parsing flags", "err", err.Error())
+		logger.WithError(err).Fatal("error parsing flags")
 	}
 
 	if log != "" {
@@ -41,22 +42,24 @@ func main() {
 			defer logFile.Close()
 			logger.Out = logFile
 		} else {
-			logger.Warningf("could not open log file for writing: %s", err.Error())
+			logger.WithError(err).Warning("could not open log file for writing")
 		}
 	}
 
 	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
 	if err != nil {
-		logger.Fatal("msg", "error creating game handler", "err", err.Error())
+		logger.WithError(err).Fatal("error creating game handler")
 	}
 
 	if err = g.Start(); err != nil {
-		logger.Fatal("msg", "unable to start game", "err", err.Error())
+		logger.WithError(err).Fatal("unable to start game")
 	}
 
-	// TODO(dr): Do we want to support graceful stop here via syscall.SIGTERM?
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	// The Multiplay process management daemon will signal the event server to
+	// stop. A graceful stop signal (SIGTERM) will be sent if the event server
+	// fleet has been configured to support it.
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	_ = g.Stop()
 }

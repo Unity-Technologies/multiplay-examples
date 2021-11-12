@@ -1,15 +1,12 @@
 package game
 
-import (
-	"net"
-	"sync/atomic"
-)
+import "net"
 
 type (
 	// udpBinding is a managed wrapper for a generic UDP listener.
 	udpBinding struct {
 		conn *net.UDPConn
-		done int32
+		done chan struct{}
 	}
 )
 
@@ -27,13 +24,13 @@ func newUDPBinding(bindAddress string) (*udpBinding, error) {
 
 	return &udpBinding{
 		conn: conn,
+		done: make(chan struct{}),
 	}, nil
 }
 
 // Done marks the binding as complete, closing any open connections.
 func (b *udpBinding) Done() {
-	// TODO(dr): Use a chan struct{} instead of atomics?
-	atomic.StoreInt32(&b.done, 1)
+	close(b.done)
 
 	if b.conn != nil {
 		b.conn.Close()
@@ -43,5 +40,10 @@ func (b *udpBinding) Done() {
 
 // IsDone determines whether the binding is complete.
 func (b udpBinding) IsDone() bool {
-	return atomic.LoadInt32(&b.done) == 1
+	select {
+	case <-b.done:
+		return true
+	default:
+		return false
+	}
 }

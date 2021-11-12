@@ -5,71 +5,78 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/sirupsen/logrus"
 )
 
 type (
-	// Game represents an instance of a game running on this server.
+	// Game represents an instance of a event running on this server.
 	Game struct {
-		// cfgFile is the file path this game uses to read its configuration from
+		// cfgFile is the file path this event uses to read its configuration from
 		cfgFile string
 
-		// clients is a map of connected game clients:
+		// clients is a map of connected event clients:
 		// - key:   string        - the remote IP of the client
 		// - value: *net.TCPConn  - a connection object representing the client connection
 		clients sync.Map
 
-		// gameEvents is a channel of game events, for example allocated / deallocated
-		gameEvents chan Event
+		// gameEvents is a channel of event events, for example allocated / deallocated
+		gameEvents chan event.Event
 
-		// gameBind is a TCP listener representing a fake game server
+		// gameBind is a TCP listener representing a fake event server
 		gameBind *net.TCPListener
 
-		// internalEvents is a channel of internal events, for example internalEventsProcessorReady
-		internalEvents chan InternalEvent
+		// internalEventProcessorReady is a channel that, when written to,
+		// indicates that the internal event processor is ready.
+		internalEventProcessorReady chan struct{}
 
-		// logger handles structured logging for this game
+		// done is a channel that when closed indicates the server is going
+		// away.
+		done chan struct{}
+
+		// logger handles structured logging for this event
 		logger *logrus.Entry
 
-		// port is the port number the game TCP server will listen on
+		// port is the port number the event TCP server will listen on
 		port uint
 
-		// queryBind is a UDP endpoint which responds to game queries
+		// queryBind is a UDP endpoint which responds to event queries
 		queryBind *udpBinding
 
-		// queryPort is the port number the game query server will listen on
+		// queryPort is the port number the event query server will listen on
 		queryPort uint
 
 		// queryProto is an implementation of an interface which responds on a particular
 		// query format, for example sqp, tf2e, etc.
 		queryProto proto.QueryResponder
 
-		// state represents current game states which are applicable to an incoming query,
+		// state represents current event states which are applicable to an incoming query,
 		// for example current players, map name
 		state *proto.QueryState
 
 		// wg handles synchronising termination of all active
-		// goroutines this game manages
+		// goroutines this event manages
 		wg sync.WaitGroup
 	}
 )
 
-// New creates a new game, configured with the provided configuration file.
+// New creates a new event, configured with the provided configuration file.
 func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
 	g := &Game{
-		cfgFile:        configPath,
-		gameEvents:     make(chan Event, 1),
-		logger:         logger,
-		internalEvents: make(chan InternalEvent, 1),
-		port:           port,
-		queryPort:      queryPort,
+		cfgFile:                     configPath,
+		gameEvents:                  make(chan event.Event, 1),
+		logger:                      logger,
+		internalEventProcessorReady: make(chan struct{}, 1),
+		done:                        make(chan struct{}, 1),
+		port:                        port,
+		queryPort:                   queryPort,
 	}
 
 	return g, nil
 }
 
-// Start starts the game, opening the configured query and game ports.
+// Start starts the event, opening the configured query and event ports.
 func (g *Game) Start() error {
 	c, err := loadConfig(g.cfgFile)
 	if err != nil {
@@ -84,7 +91,7 @@ func (g *Game) Start() error {
 	go g.processInternalEvents()
 
 	// Wait until the internal event processor is ready.
-	<-g.internalEvents
+	<-g.internalEventProcessorReady
 
 	g.logger.
 		WithField("port", g.port).
@@ -94,8 +101,8 @@ func (g *Game) Start() error {
 
 	// Handle the app starting with an allocation
 	if c.AllocationUUID != "" {
-		g.gameEvents <- Event{
-			Type:   Allocated,
+		g.gameEvents <- event.Event{
+			Type:   event.Allocated,
 			Config: c,
 		}
 	}
@@ -103,7 +110,7 @@ func (g *Game) Start() error {
 	return nil
 }
 
-// Stop stops the game and closes all connections.
+// Stop stops the event and closes all connections.
 func (g *Game) Stop() error {
 	g.logger.Info("stopping")
 
@@ -111,8 +118,8 @@ func (g *Game) Stop() error {
 		g.queryBind.Done()
 	}
 
-	g.gameEvents <- Event{Type: Deallocated}
-	g.internalEvents <- closeInternalEventsProcessor
+	g.gameEvents <- event.Event{Type: event.Deallocated}
+	close(g.done)
 	g.wg.Wait()
 	g.logger.Info("stopped")
 
