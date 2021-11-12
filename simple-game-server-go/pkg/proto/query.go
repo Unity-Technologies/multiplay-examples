@@ -19,7 +19,7 @@ type (
 		Write(resp *bytes.Buffer, v interface{}) error
 	}
 
-	// QueryState represents the state of a currently running event.
+	// QueryState represents the state of a currently running game.
 	QueryState struct {
 		CurrentPlayers int32
 		MaxPlayers     int32

@@ -11,20 +11,20 @@ import (
 )
 
 type (
-	// Game represents an instance of a event running on this server.
+	// Game represents an instance of a game running on this server.
 	Game struct {
-		// cfgFile is the file path this event uses to read its configuration from
+		// cfgFile is the file path this game uses to read its configuration from
 		cfgFile string
 
-		// clients is a map of connected event clients:
+		// clients is a map of connected game clients:
 		// - key:   string        - the remote IP of the client
 		// - value: *net.TCPConn  - a connection object representing the client connection
 		clients sync.Map
 
-		// gameEvents is a channel of event events, for example allocated / deallocated
+		// gameEvents is a channel of game events, for example allocated / deallocated
 		gameEvents chan event.Event
 
-		// gameBind is a TCP listener representing a fake event server
+		// gameBind is a TCP listener representing a fake game server
 		gameBind *net.TCPListener
 
 		// internalEventProcessorReady is a channel that, when written to,
@@ -35,33 +35,33 @@ type (
 		// away.
 		done chan struct{}
 
-		// logger handles structured logging for this event
+		// logger handles structured logging for this game
 		logger *logrus.Entry
 
-		// port is the port number the event TCP server will listen on
+		// port is the port number the game TCP server will listen on
 		port uint
 
-		// queryBind is a UDP endpoint which responds to event queries
+		// queryBind is a UDP endpoint which responds to game queries
 		queryBind *udpBinding
 
-		// queryPort is the port number the event query server will listen on
+		// queryPort is the port number the game query server will listen on
 		queryPort uint
 
 		// queryProto is an implementation of an interface which responds on a particular
 		// query format, for example sqp, tf2e, etc.
 		queryProto proto.QueryResponder
 
-		// state represents current event states which are applicable to an incoming query,
+		// state represents current game states which are applicable to an incoming query,
 		// for example current players, map name
 		state *proto.QueryState
 
 		// wg handles synchronising termination of all active
-		// goroutines this event manages
+		// goroutines this game manages
 		wg sync.WaitGroup
 	}
 )
 
-// New creates a new event, configured with the provided configuration file.
+// New creates a new game, configured with the provided configuration file.
 func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
 	g := &Game{
 		cfgFile:                     configPath,
@@ -76,7 +76,7 @@ func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, 
 	return g, nil
 }
 
-// Start starts the event, opening the configured query and event ports.
+// Start starts the game, opening the configured query and game ports.
 func (g *Game) Start() error {
 	c, err := loadConfig(g.cfgFile)
 	if err != nil {
@@ -110,7 +110,7 @@ func (g *Game) Start() error {
 	return nil
 }
 
-// Stop stops the event and closes all connections.
+// Stop stops the game and closes all connections.
 func (g *Game) Stop() error {
 	g.logger.Info("stopping")
 

@@ -19,7 +19,7 @@ func parseFlags(args []string) (config string, log string, port uint, queryPort 
 
 	f.StringVar(&config, "config", filepath.Join(dir, "server.json"), "path to the config file to use")
 	f.StringVar(&log, "log", filepath.Join(dir, "logs"), "path to the log directory to write to")
-	f.UintVar(&port, "port", 8000, "port for the event server to bind to")
+	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
 	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
 	f.StringVar(&ip, "ip", "", "unused: required for full platform support")
 	err = f.Parse(args)
@@ -55,8 +55,8 @@ func main() {
 		logger.WithError(err).Fatal("unable to start game")
 	}
 
-	// The Multiplay process management daemon will signal the event server to
-	// stop. A graceful stop signal (SIGTERM) will be sent if the event server
+	// The Multiplay process management daemon will signal the game server to
+	// stop. A graceful stop signal (SIGTERM) will be sent if the game server
 	// fleet has been configured to support it.
 	c := make(chan os.Signal, 2)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

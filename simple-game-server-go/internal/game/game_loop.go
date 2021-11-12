@@ -16,7 +16,7 @@ import (
 )
 
 // processEvents handles processing events for the operation of the
-// event server, such as allocating and deallocating the server.
+// game server, such as allocating and deallocating the server.
 func (g *Game) processEvents() {
 	g.wg.Add(1)
 	defer g.wg.Done()
@@ -32,12 +32,12 @@ func (g *Game) processEvents() {
 	}
 }
 
-// allocated starts an event after the server has been allocated.
+// allocated starts a game after the server has been allocated.
 func (g *Game) allocated(c *config.Config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("mp-event-server-sample-go - %s", c.AllocationUUID),
+		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocationUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
@@ -54,7 +54,7 @@ func (g *Game) allocated(c *config.Config) {
 	go g.launchGame()
 }
 
-// deallocated stops the currently running event, if one is running.
+// deallocated stops the currently running game, if one is running.
 func (g *Game) deallocated(c *config.Config) {
 	g.disconnectAllClients()
 
@@ -156,7 +156,7 @@ func (g *Game) handleClient(client *net.TCPConn) {
 	}
 }
 
-// disconnectAllClients disconnects all remaining clients connected to the event server.
+// disconnectAllClients disconnects all remaining clients connected to the game server.
 func (g *Game) disconnectAllClients() {
 	g.clients.Range(func(key interface{}, value interface{}) bool {
 		client, ok := value.(*net.TCPConn)
