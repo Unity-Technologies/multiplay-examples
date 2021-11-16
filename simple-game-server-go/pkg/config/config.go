@@ -8,26 +8,26 @@ import (
 
 // Config represents the game server configuration.
 type Config struct {
-	// AllocationUUID is the allocation ID provided to an event
-	AllocationUUID string
+	// AllocatedUUID is the allocation ID provided to an event.
+	AllocatedUUID string `json:"allocatedUUID"`
 
-	// ReadBuffer is the size of the UDP connection read buffer
-	ReadBuffer int
+	// ReadBuffer is the size of the UDP connection read buffer.
+	ReadBuffer int `json:"readBuffer,string"`
 
-	// WriteBuffer is the size of the UDP connection write buffer
-	WriteBuffer int
+	// WriteBuffer is the size of the UDP connection write buffer.
+	WriteBuffer int `json:"writeBuffer,string"`
 
 	// MaxPlayers is the default value to report for max players.
-	MaxPlayers uint32
+	MaxPlayers uint32 `json:"maxPlayers,string"`
 
 	// Map is the default value to report for map.
-	Map string
+	Map string `json:"map"`
 
 	// GameType is the default value to report for gametype.
-	GameType string
+	GameType string `json:"gameType"`
 
-	// QueryProtocol determines the protocol used for query responses
-	QueryProtocol string
+	// QueryType determines the protocol used for query responses.
+	QueryType string `json:"queryType"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -46,8 +46,28 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
-	if cfg.QueryProtocol == "" {
-		cfg.QueryProtocol = "sqp"
+	if cfg.ReadBuffer == 0 {
+		cfg.ReadBuffer = 40960
+	}
+
+	if cfg.WriteBuffer == 0 {
+		cfg.WriteBuffer = 40960
+	}
+
+	if cfg.MaxPlayers == 0 {
+		cfg.MaxPlayers = 4
+	}
+
+	if cfg.Map == "" {
+		cfg.Map = "Sample Map"
+	}
+
+	if cfg.GameType == "" {
+		cfg.GameType = "Sample Game"
+	}
+
+	if cfg.QueryType == "" {
+		cfg.QueryType = "sqp"
 	}
 
 	return cfg, nil

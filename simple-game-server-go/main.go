@@ -13,7 +13,6 @@ import (
 
 // parseFlags parses the supported flags and returns the values supplied to these flags.
 func parseFlags(args []string) (config string, log string, port uint, queryPort uint, err error) {
-	var ip string
 	dir, _ := os.UserHomeDir()
 	f := flag.FlagSet{}
 
@@ -21,7 +20,6 @@ func parseFlags(args []string) (config string, log string, port uint, queryPort 
 	f.StringVar(&log, "log", filepath.Join(dir, "logs"), "path to the log directory to write to")
 	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
 	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
-	f.StringVar(&ip, "ip", "", "unused: required for full platform support")
 	err = f.Parse(args)
 
 	return

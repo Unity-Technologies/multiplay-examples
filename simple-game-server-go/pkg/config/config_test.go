@@ -24,25 +24,40 @@ func Test_NewConfigFromFile(t *testing.T) {
 			name: "loads config",
 			fields: fields{
 				configContent: `{
-					"AllocationUUID": "alloc-uuid",
-					"QueryProtocol": "sqp"
+					"allocatedUUID": "alloc-uuid",
+					"readBuffer": "1024",
+					"writeBuffer": "1024",
+					"maxPlayers": "8",
+					"map": "my-map",
+					"gameType": "my-game",
+					"queryType": "sqp"
 				}`,
 			},
 			want: &Config{
-				AllocationUUID: "alloc-uuid",
-				QueryProtocol:  "sqp",
+				AllocatedUUID: "alloc-uuid",
+				ReadBuffer:    1024,
+				WriteBuffer:   1024,
+				MaxPlayers:    8,
+				Map:           "my-map",
+				GameType:      "my-game",
+				QueryType:     "sqp",
 			},
 		},
 		{
-			name: "defaults to sqp",
+			name: "applies defaults",
 			fields: fields{
 				configContent: `{
-					"AllocationUUID": "alloc-uuid"
+					"allocatedUUID": "alloc-uuid"
 				}`,
 			},
 			want: &Config{
-				AllocationUUID: "alloc-uuid",
-				QueryProtocol:  "sqp",
+				AllocatedUUID: "alloc-uuid",
+				ReadBuffer:    40960,
+				WriteBuffer:   40960,
+				MaxPlayers:    4,
+				Map:           "Sample Map",
+				GameType:      "Sample Game",
+				QueryType:     "sqp",
 			},
 		},
 		{

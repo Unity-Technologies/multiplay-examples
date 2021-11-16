@@ -97,11 +97,11 @@ func (g *Game) Start() error {
 	g.logger.
 		WithField("port", g.port).
 		WithField("queryport", g.queryPort).
-		WithField("proto", c.QueryProtocol).
+		WithField("proto", c.QueryType).
 		Info("server started")
 
 	// Handle the app starting with an allocation
-	if c.AllocationUUID != "" {
+	if c.AllocatedUUID != "" {
 		g.gameEvents <- event.Event{
 			Type:   event.Allocated,
 			Config: c,
