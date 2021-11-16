@@ -34,10 +34,10 @@ func (g *Game) processEvents() {
 
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(c *config.Config) {
-	g.logger = g.logger.WithField("allocation_uuid", c.AllocationUUID)
+	g.logger = g.logger.WithField("allocation_uuid", c.AllocatedUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocationUUID),
+		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocatedUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
@@ -174,7 +174,7 @@ func (g *Game) disconnectAllClients() {
 // The query binding endpoints are restarted to serve on this endpoint.
 func (g *Game) switchQueryProtocol(c config.Config) error {
 	var err error
-	switch c.QueryProtocol {
+	switch c.QueryType {
 	case "a2s":
 		g.queryProto, err = a2s.NewQueryResponder(g.state)
 	default:

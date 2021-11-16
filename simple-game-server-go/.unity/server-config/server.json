@@ -1,9 +1,0 @@
-{
-  "AllocationUUID": "$$allocated_uuid$$",
-  "ReadBuffer": 40960,
-  "WriteBuffer": 40960,
-  "MaxPlayers": 4,
-  "Map": "mp-game-server-sample-go",
-  "GameType": "Sample Game",
-  "QueryProtocol": "$$query_type$$"
-}

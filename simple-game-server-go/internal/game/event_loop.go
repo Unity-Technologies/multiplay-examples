@@ -13,7 +13,7 @@ import (
 // processInternalEvents processes internal events and watches the provided
 // configuration file for changes.
 // If changes are made, an allocation or deallocation event is fired depending
-// on the state of AllocationUUID.
+// on the state of AllocatedUUID.
 func (g *Game) processInternalEvents() {
 	w, _ := fsnotify.NewWatcher()
 	_ = w.Add(filepath.Dir(g.cfgFile))
@@ -76,7 +76,7 @@ func (g *Game) processInternalEvents() {
 // triggerAllocationEvents triggers an allocation or deallocation event
 // depending on the presence of an allocation ID.
 func (g *Game) triggerAllocationEvents(c *config.Config) {
-	if c.AllocationUUID != "" {
+	if c.AllocatedUUID != "" {
 		g.gameEvents <- event.Event{
 			Type:   event.Allocated,
 			Config: c,

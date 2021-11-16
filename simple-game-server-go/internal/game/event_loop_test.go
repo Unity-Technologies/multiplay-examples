@@ -5,7 +5,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -26,29 +25,23 @@ func Test_watchConfig(t *testing.T) {
 
 	// Allocate
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
-		"AllocationUUID": "alloc-uuid",
-		"MaxPlayers": 12
+		"allocatedUUID": "alloc-uuid",
+		"maxPlayers": "12"
 	}`), 0600))
-	require.Equal(t, event.Event{
-		Type: event.Allocated,
-		Config: &config.Config{
-			AllocationUUID: "alloc-uuid",
-			MaxPlayers:     12,
-			QueryProtocol:  "sqp",
-		},
-	}, <-g.gameEvents)
+	ev := <-g.gameEvents
+	require.Equal(t, event.Allocated, ev.Type)
+	require.Equal(t, "alloc-uuid", ev.Config.AllocatedUUID)
+	require.Equal(t, uint32(12), ev.Config.MaxPlayers)
+	require.Equal(t, "sqp", ev.Config.QueryType)
 
 	// Deallocate
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
-		"AllocationUUID": "",
-		"MaxPlayers": 0
+		"allocatedUUID": ""
 	}`), 0600))
-	require.Equal(t, event.Event{
-		Type: event.Deallocated,
-		Config: &config.Config{
-			QueryProtocol: "sqp",
-		},
-	}, <-g.gameEvents)
+	ev = <-g.gameEvents
+	require.Equal(t, event.Deallocated, ev.Type)
+	require.Equal(t, "sqp", ev.Config.QueryType)
+	require.Equal(t, "", ev.Config.AllocatedUUID)
 
 	close(g.done)
 }
