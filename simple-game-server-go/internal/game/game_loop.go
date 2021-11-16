@@ -37,7 +37,7 @@ func (g *Game) allocated(c *config.Config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocatedUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("mp-game-server-sample-go - %s", c.AllocatedUUID),
+		ServerName: fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
