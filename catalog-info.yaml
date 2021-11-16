@@ -3,9 +3,9 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   annotations:
-    github.com/project-slug: Unity-Technologies/mp-game-server-sample-go
-  name: mp-game-server-sample-go
-  description: "Sample Multiplay Game Server Implementation written in Golang"
+    github.com/project-slug: Unity-Technologies/multiplay-examples
+  name: multiplay-examples
+  description: "Examples for using Unity Multiplay: https://unity.com/products/multiplay"
   labels:
     costcenter: "5111"
   tags:
