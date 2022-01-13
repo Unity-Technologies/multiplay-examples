@@ -131,8 +131,6 @@ func (g *Game) Stop() error {
 // The connection is retried as this process may not be immediately registered
 // with the SDK daemon.
 func (g *Game) sdkConnect() (cerr error) {
-	// TODO(dr): Might be preferable to place this logic in the client package
-	// itself.
 	for {
 		select {
 		case <-g.done:
