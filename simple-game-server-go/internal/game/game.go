@@ -5,9 +5,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Unity-Technologies/mp-sdk-daemon-poc/daemon/pkg/client"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
+	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,10 +29,6 @@ type (
 
 		// gameBind is a TCP listener representing a fake game server
 		gameBind *net.TCPListener
-
-		// internalEventProcessorReady is a channel that, when written to,
-		// indicates that the internal event processor is ready.
-		internalEventProcessorReady chan struct{}
 
 		// done is a channel that when closed indicates the server is going
 		// away.
@@ -59,19 +57,21 @@ type (
 		// wg handles synchronising termination of all active
 		// goroutines this game manages
 		wg sync.WaitGroup
+
+		// sdkClient is a client for the Multiplay SDK.
+		sdkClient *client.SDKDaemonClient
 	}
 )
 
 // New creates a new game, configured with the provided configuration file.
 func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
 	g := &Game{
-		cfgFile:                     configPath,
-		gameEvents:                  make(chan event.Event, 1),
-		logger:                      logger,
-		internalEventProcessorReady: make(chan struct{}, 1),
-		done:                        make(chan struct{}, 1),
-		port:                        port,
-		queryPort:                   queryPort,
+		cfgFile:    configPath,
+		gameEvents: make(chan event.Event, 1),
+		logger:     logger,
+		done:       make(chan struct{}, 1),
+		port:       port,
+		queryPort:  queryPort,
 	}
 
 	return g, nil
@@ -84,29 +84,27 @@ func (g *Game) Start() error {
 		return err
 	}
 
+	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL)
+
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
+	go g.sdkErrorHandler()
 	go g.processEvents()
-	go g.processInternalEvents()
 
-	// Wait until the internal event processor is ready.
-	<-g.internalEventProcessorReady
+	g.sdkClient.OnAllocate(g.allocateHandler)
+	g.sdkClient.OnDeallocate(g.deallocateHandler)
+
+	if err = g.sdkConnect(); err != nil {
+		return err
+	}
 
 	g.logger.
 		WithField("port", g.port).
 		WithField("queryport", g.queryPort).
 		WithField("proto", c.QueryType).
 		Info("server started")
-
-	// Handle the app starting with an allocation
-	if c.AllocatedUUID != "" {
-		g.gameEvents <- event.Event{
-			Type:   event.Allocated,
-			Config: c,
-		}
-	}
 
 	return nil
 }
@@ -121,10 +119,42 @@ func (g *Game) Stop() error {
 
 	g.gameEvents <- event.Event{Type: event.Deallocated}
 	close(g.done)
+	close(g.gameEvents)
 	g.wg.Wait()
 	g.logger.Info("stopped")
 
-	return nil
+	return g.sdkClient.Close()
+}
+
+// sdkConnect attempts to connect to the SDK Daemon.
+//
+// The connection is retried as this process may not be immediately registered
+// with the SDK daemon.
+func (g *Game) sdkConnect() (cerr error) {
+	// TODO(dr): Might be preferable to place this logic in the client package
+	// itself.
+	for {
+		select {
+		case <-g.done:
+			return cerr
+		default:
+			if err := g.sdkClient.Subscribe(); err != nil {
+				cerr = multierror.Append(cerr, err)
+				time.Sleep(2 * time.Second)
+				continue
+			}
+
+			return nil
+		}
+	}
+}
+
+// sdkErrorHandler logs errors returned as a result of communicating with the
+// Multiplay SDK daemon.
+func (g *Game) sdkErrorHandler() {
+	for err := range g.sdkClient.Errors() {
+		g.logger.WithError(err).Error("error from SDK daemon")
+	}
 }
 
 // handleQuery handles responding to query commands on an incoming UDP port.

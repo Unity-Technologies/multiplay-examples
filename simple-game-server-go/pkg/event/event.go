@@ -8,8 +8,9 @@ type (
 
 	// Event represents a Multiplay game server lifecycle event.
 	Event struct {
-		Type   Typ
-		Config *config.Config
+		Type           Typ
+		AllocationUUID string
+		Config         *config.Config
 	}
 )
 

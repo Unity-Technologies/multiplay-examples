@@ -8,9 +8,6 @@ import (
 
 // Config represents the game server configuration.
 type Config struct {
-	// AllocatedUUID is the allocation ID provided to an event.
-	AllocatedUUID string `json:"allocatedUUID"`
-
 	// ReadBuffer is the size of the UDP connection read buffer.
 	ReadBuffer int `json:"readBuffer,string"`
 
@@ -28,6 +25,9 @@ type Config struct {
 
 	// QueryType determines the protocol used for query responses.
 	QueryType string `json:"queryType"`
+
+	// SDKDaemonURL is the URL to the SDK daemon.
+	SDKDaemonURL string `json:"sdkDaemonURL"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -68,6 +68,10 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 
 	if cfg.QueryType == "" {
 		cfg.QueryType = "sqp"
+	}
+
+	if cfg.SDKDaemonURL == "" {
+		cfg.SDKDaemonURL = "localhost:5000"
 	}
 
 	return cfg, nil

@@ -24,7 +24,7 @@ func (g *Game) processEvents() {
 	for ev := range g.gameEvents {
 		switch ev.Type {
 		case event.Allocated:
-			g.allocated(ev.Config)
+			g.allocated(ev.Config, ev.AllocationUUID)
 
 		case event.Deallocated:
 			g.deallocated(ev.Config)
@@ -33,11 +33,11 @@ func (g *Game) processEvents() {
 }
 
 // allocated starts a game after the server has been allocated.
-func (g *Game) allocated(c *config.Config) {
-	g.logger = g.logger.WithField("allocation_uuid", c.AllocatedUUID)
+func (g *Game) allocated(c *config.Config, allocationUUID string) {
+	g.logger = g.logger.WithField("allocation_uuid", allocationUUID)
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID),
+		ServerName: fmt.Sprintf("simple-game-server-go - %s", allocationUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
