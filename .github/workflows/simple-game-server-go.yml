@@ -10,6 +10,11 @@ jobs:
     defaults:
       run:
         working-directory: './simple-game-server-go'
+    env:
+      GOPRIVATE: ""
+      GONOSUMDB: "github.com/Unity-Technologies/*"
+      GOPROXY: https://github:${{ secrets.GITHUB_TOKEN }}@athens.prd.cds.internal.unity3d.com/
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -32,8 +37,6 @@ jobs:
           version: latest
           args: build --rm-dist --snapshot
           workdir: './simple-game-server-go'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
         run: 'go test -timeout=5m -race -v ./...'
       - name: Release
@@ -44,5 +47,3 @@ jobs:
           version: latest
           args: release --rm-dist
           workdir: './simple-game-server-go'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
