@@ -139,6 +139,7 @@ func (g *Game) sdkConnect() (cerr error) {
 			if err := g.sdkClient.Subscribe(); err != nil {
 				cerr = multierror.Append(cerr, err)
 				time.Sleep(2 * time.Second)
+
 				continue
 			}
 
