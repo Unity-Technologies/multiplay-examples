@@ -84,7 +84,7 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL)
+	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL, c.ServerID)
 
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err

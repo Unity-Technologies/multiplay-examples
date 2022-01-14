@@ -26,6 +26,9 @@ type Config struct {
 	// QueryType determines the protocol used for query responses.
 	QueryType string `json:"queryType"`
 
+	// ServerID is the Multiplay game server ID.
+	ServerID int64 `json:"serverID"`
+
 	// SDKDaemonURL is the URL to the SDK daemon.
 	SDKDaemonURL string `json:"sdkDaemonURL"`
 }
