@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/Unity-Technologies/mp-sdk-daemon-poc/daemon v0.0.0-20220114105917-555d433b0f6d
+	github.com/Unity-Technologies/mp-sdk-daemon-poc/daemon v0.0.0-20220114115109-f8dce8e52db1
 	github.com/hashicorp/go-multierror v1.1.1
 )
 
