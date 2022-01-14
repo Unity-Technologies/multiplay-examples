@@ -27,7 +27,7 @@ type Config struct {
 	QueryType string `json:"queryType"`
 
 	// ServerID is the Multiplay game server ID.
-	ServerID int64 `json:"serverID"`
+	ServerID string `json:"serverID"`
 
 	// SDKDaemonURL is the URL to the SDK daemon.
 	SDKDaemonURL string `json:"sdkDaemonURL"`

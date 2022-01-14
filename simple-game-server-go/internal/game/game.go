@@ -1,7 +1,9 @@
 package game
 
 import (
+	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -84,7 +86,12 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL, c.ServerID)
+	sid, err := strconv.ParseInt(c.ServerID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("parse server ID: %w", err)
+	}
+
+	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL, sid)
 
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
