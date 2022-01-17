@@ -71,7 +71,7 @@ func matchmake(matchmakerURL string) (err error) {
 	}
 
 	fmt.Printf("Connecting to match:\n")
-	fmt.Printf(" - Allocation UUID: %s:%d\n", matchInfo.AllocationUUID)
+	fmt.Printf(" - Allocation UUID: %s:%d\n", matchInfo.AllocationUUID, matchInfo.Port)
 	fmt.Printf(" - Address: %s:%d\n", matchInfo.IP, matchInfo.Port)
 	fmt.Printf(" - Other players:\n")
 	for _, pl := range matchInfo.Players {
@@ -114,7 +114,7 @@ func matchmake(matchmakerURL string) (err error) {
 				fmt.Printf("could not send to server: giving up: %s\n", err.Error())
 				return
 			}
-			fmt.Print(string(content))
+			fmt.Println(string(content))
 			<-time.After(time.Millisecond * 200)
 		}
 	}()

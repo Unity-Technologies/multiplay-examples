@@ -167,7 +167,7 @@ func (m *SimpleMatchmaker) checkMatch() {
 		// allocation has failed the following calls to monitor it.
 		fmt.Println("About to allocate for match")
 		if _, err := m.mpClient.Allocate(m.cfg.FleetID, m.cfg.RegionID, m.cfg.ProfileID, mi.AllocationUUID); err != nil {
-			fmt.Printf("Failed to allocate %s\n", mi.AllocationUUID)
+			fmt.Printf("Failed to allocate %s: %s\n", mi.AllocationUUID, err.Error())
 			m.matchCleanup(mi.AllocationUUID)
 			continue
 		}
@@ -235,7 +235,7 @@ func (m *SimpleMatchmaker) playerMatch(playerUUID string) (matchInfo *matchmaker
 	}
 	if alloc == "" {
 		// No match found for this player yet.
-		fmt.Printf("Player %s asked about match status, but it was not ready.", playerUUID)
+		fmt.Printf("Player %s asked about match status, but it was not ready.\n", playerUUID)
 		return nil, ErrMatchSearching
 	}
 

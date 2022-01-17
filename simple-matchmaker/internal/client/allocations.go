@@ -46,6 +46,9 @@ func (m *multiplayClient) Allocations(fleet string, uuids ...string) ([]Allocati
 
 	params := url.Values{}
 	params.Add("fleetid", fleet)
+	for _, uuid := range uuids {
+		params.Add("uuid", uuid)
+	}
 	u.RawQuery = params.Encode()
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -53,6 +56,7 @@ func (m *multiplayClient) Allocations(fleet string, uuids ...string) ([]Allocati
 		return nil, fmt.Errorf("allocations new request")
 	}
 
+	req.Form = make(map[string][]string, 1)
 	for _, uuid := range uuids {
 		req.Form.Add("uuid", uuid)
 	}

@@ -24,8 +24,8 @@ type allocateResponseWrapper struct {
 
 // Allocate allocates using the multiplay api
 func (m *multiplayClient) Allocate(fleet, region string, profile int64, uuid string) (*AllocateResponse, error) {
-	fmt.Println("Allocating")
-	urlStr := fmt.Sprintf("%s/cfp/v2/fleet/%s/server/allocate", m.baseURL, fleet)
+	fmt.Println("Allocating", m.baseURL)
+	urlStr := fmt.Sprintf("%s/cfp/v1/server/allocate", m.baseURL)
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, fmt.Errorf("parse url %s", urlStr)
@@ -42,7 +42,9 @@ func (m *multiplayClient) Allocate(fleet, region string, profile int64, uuid str
 		return nil, fmt.Errorf("allocate new request")
 	}
 
+	fmt.Println("Access:", m.accessKey, "Secret:", m.secretKey)
 	req.SetBasicAuth(m.accessKey, m.secretKey)
+
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("send allocate request: %w", err)
@@ -50,7 +52,7 @@ func (m *multiplayClient) Allocate(fleet, region string, profile int64, uuid str
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("allocate call failed: %w", err)
+		return nil, fmt.Errorf("allocate call status not ok: %d", res.StatusCode)
 	}
 
 	var ar allocateResponseWrapper
@@ -59,7 +61,7 @@ func (m *multiplayClient) Allocate(fleet, region string, profile int64, uuid str
 	}
 
 	if !ar.Success {
-		return nil, fmt.Errorf("allocation request failed")
+		return nil, fmt.Errorf("allocation request failed: %+v", ar)
 	}
 
 	return &ar.Allocation, nil

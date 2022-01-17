@@ -7,11 +7,6 @@ import (
 	"log"
 	"net/http"
 
-	//"github.com/caarlos0/env"
-	//"github.com/google/uuid"
-	//"github.com/gorilla/mux"
-	//"github.com/lwaddicor/hackweekmatchmaker/mpclient"
-
 	mpclient "github.com/Unity-Technologies/multiplay-examples/simple-matchmaker/internal/client"
 	"github.com/Unity-Technologies/multiplay-examples/simple-matchmaker/internal/simplematchmaker"
 	"github.com/Unity-Technologies/multiplay-examples/simple-matchmaker/internal/simplematchmaker/tcpmirror"
@@ -45,21 +40,27 @@ func main() {
 	if *standalone {
 		backendClient = mpclient.MockMultiplayClient{}
 	} else {
-
 		if *fleetID == "" {
 			displayArgs("No fleet specified")
 			return
 		}
 		if *regionID == "" {
 			displayArgs("No region specified")
+			return
 		}
 		if *buildCfg == 0 {
 			displayArgs("No buildcfg specified")
+			return
 		}
 
 		cfg.FleetID = *fleetID
 		cfg.RegionID = *regionID
 		cfg.ProfileID = *buildCfg
+		var err error
+		backendClient, err = mpclient.NewClientFromEnv()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	cfg.MatchSize = *matchSize
