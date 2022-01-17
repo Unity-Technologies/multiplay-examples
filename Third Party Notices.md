@@ -22,4 +22,20 @@ Component Name: stretchr/testify
 
 License Type: "MIT"
 
-[logrus License](https://github.com/stretchr/testify/blob/master/LICENSE)
+[testify License](https://github.com/stretchr/testify/blob/master/LICENSE)
+
+---
+
+Component Name: google/uuid
+
+License Type: "BSD 3-clause"
+
+[google uuid License](https://github.com/google/uuid/blob/master/LICENSE)
+
+---
+
+Component Name: caarlos0/env
+
+License Type: "MIT"
+
+[caarlos0 env License](https://github.com/caarlos0/env/blob/main/LICENSE.md)
