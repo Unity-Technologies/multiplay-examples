@@ -2,6 +2,7 @@ package game
 
 import (
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -59,11 +60,21 @@ type (
 		// wg handles synchronising termination of all active
 		// goroutines this game manages
 		wg sync.WaitGroup
+
+		// httpClient is an http client that is used to retrieve the token from the payload
+		// proxy as well as send backfill ticket approvals to the matchmaker
+		httpClient *http.Client
+
+		// payloadProxyUrl is the url for the payload proxy which is used to retrieve the token
+		payloadProxyUrl string
+
+		// matchmakerUrl is the url used to approve backfill tickets
+		matchmakerUrl string
 	}
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client, payloadProxyUrl string, matchmakerUrl string) (*Game, error) {
 	g := &Game{
 		cfgFile:                     configPath,
 		gameEvents:                  make(chan event.Event, 1),
@@ -72,6 +83,9 @@ func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, 
 		done:                        make(chan struct{}, 1),
 		port:                        port,
 		queryPort:                   queryPort,
+		httpClient:                  httpClient,
+		payloadProxyUrl:             payloadProxyUrl,
+		matchmakerUrl:               matchmakerUrl,
 	}
 
 	return g, nil

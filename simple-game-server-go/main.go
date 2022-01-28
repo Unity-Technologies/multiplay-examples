@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/game"
 	"github.com/sirupsen/logrus"
@@ -44,7 +46,7 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
+	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort, &http.Client{Timeout: time.Duration(1) * time.Second}, "localhost:8086", "matchmaking-ticket-gateway-stg.connected.unity3d.com")
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}

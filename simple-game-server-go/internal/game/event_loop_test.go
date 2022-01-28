@@ -2,8 +2,10 @@ package game
 
 import (
 	"io/ioutil"
+	"net/http"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/sirupsen/logrus"
@@ -16,7 +18,7 @@ func Test_watchConfig(t *testing.T) {
 
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0600))
 
-	g, err := New(l, p, 9000, 9001)
+	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: time.Duration(1) * time.Second}, "", "")
 	require.NoError(t, err)
 	require.NotNil(t, g)
 

@@ -1,9 +1,14 @@
 package game
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"net/http"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -13,6 +18,20 @@ import (
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
+)
+
+type (
+	// tokenResponse is the representation of a token and an error from the payload proxy service.
+	tokenResponse struct {
+		Token string
+		Error string
+	}
+
+	// tokenPayload represents the environment and project id of a token.
+	tokenPayload struct {
+		Upid string `json:"project_guid"`
+		Env  string `json:"environment_id"`
+	}
 )
 
 // processEvents handles processing events for the operation of the
@@ -101,6 +120,13 @@ func (g *Game) launchGame() {
 
 	g.gameBind = gs
 
+	go func() {
+		for {
+			g.approveBackfillTicket()
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
 	for {
 		client, err := g.acceptClient(g.gameBind)
 		if err != nil {
@@ -115,6 +141,120 @@ func (g *Game) launchGame() {
 
 		go g.handleClient(client)
 	}
+}
+
+func (g *Game) approveBackfillTicket() (*http.Response, error) {
+	token, err := g.getJwtToken()
+
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("Failed to get token from payload proxy.")
+		return nil, err
+	}
+
+	// Parse the payload of the token response
+	payloadBytes, err := base64.RawStdEncoding.DecodeString(strings.Split(token, ".")[1])
+
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("Failed to parse token payload from payload proxy response.")
+		return nil, err
+	}
+
+	var tp tokenPayload
+	err = json.Unmarshal(payloadBytes, &tp)
+
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("Failed to parse token payload from payload proxy response.")
+		return nil, err
+	}
+
+	c, err := g.getConfig()
+
+	// Get upid, env, allocationId
+	upid := tp.Upid
+	env := tp.Env
+	allocationId := c.AllocatedUUID
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", g.matchmakerUrl, upid, env, allocationId), http.NoBody)
+
+	if err != nil {
+		g.logger.Error("Failed to create backfill request.")
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	resp, err := g.httpClient.Do(req)
+
+	if err != nil {
+		g.logger.Error("Failed to call the matchmaker backfill allocations endpoint.")
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (g *Game) getJwtToken() (string, error) {
+	// Get the token from the payload proxy
+	resp, err := g.httpClient.Get(fmt.Sprintf("%s/token", g.payloadProxyUrl))
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(resp.Status)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var tr tokenResponse
+	err = json.Unmarshal(bodyBytes, &tr)
+
+	if err != nil {
+		return "", err
+	}
+
+	if len(tr.Error) != 0 {
+		err = fmt.Errorf(tr.Error)
+		return "", err
+	}
+
+	return tr.Token, nil
+}
+
+func (g *Game) getConfig() (*config.Config, error) {
+	for {
+		// Get Config from file
+		c, err := config.NewConfigFromFile(g.cfgFile)
+
+		if err != nil {
+			// Multiplay truncates the file when a deallocation occurs,
+			// which results in two writes. The first write will produce an
+			// empty file, meaning JSON parsing will fail.
+			if !errors.Is(err, io.EOF) {
+				g.logger.
+					WithField("error", err.Error()).
+					Error("error loading config")
+				return nil, err
+			}
+
+			continue
+		}
+		return c, nil
+	}
+
 }
 
 // acceptClient accepts a new TCP connection and updates internal state.
