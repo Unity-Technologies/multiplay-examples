@@ -19,5 +19,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: simple-game-server-linux
-          path: simple-game-server-go/simple-game-server-lin
+          path: simple-game-server-go/simple-game-server-linux
           retention-days: 5
