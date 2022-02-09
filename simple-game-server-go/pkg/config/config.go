@@ -28,6 +28,9 @@ type Config struct {
 
 	// QueryType determines the protocol used for query responses.
 	QueryType string `json:"queryType"`
+
+	// MatchmakerUrl is the public domain name fronting the ticket manager API
+	MatchmakerUrl string `json:"matchmakerUrl"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -68,6 +71,10 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 
 	if cfg.QueryType == "" {
 		cfg.QueryType = "sqp"
+	}
+
+	if cfg.MatchmakerUrl == "" {
+		cfg.QueryType = "https://matchmaker.services.api.unity.com"
 	}
 
 	return cfg, nil

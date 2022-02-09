@@ -121,8 +121,15 @@ func (g *Game) launchGame() {
 	g.gameBind = gs
 
 	go func() {
+		c, err := g.getConfig()
+		if err != nil {
+			g.logger.
+				WithField("error", err.Error()).
+				Error("error loading config")
+			return
+		}
 		for {
-			g.approveBackfillTicket()
+			g.approveBackfillTicket(c)
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -143,85 +150,34 @@ func (g *Game) launchGame() {
 	}
 }
 
-func (g *Game) approveBackfillTicket() (*http.Response, error) {
-	g.logger.Infof("Sending GET token request: %s", fmt.Sprintf("%s/token", g.payloadProxyUrl))
+// approveBackfillTicket is called in a loop to update and keep alive the backfill ticket.
+func (g *Game) approveBackfillTicket(c *config.Config) {
 	token, err := g.getJwtToken()
 
 	if err != nil {
 		g.logger.
 			WithField("error", err.Error()).
 			Error("Failed to get token from payload proxy.")
-		return nil, err
+		return
 	}
 
-	// Parse the payload of the token response
-	payloadBytes, err := base64.RawStdEncoding.DecodeString(strings.Split(token, ".")[1])
+	err = g.updateBackfillAllocation(c, token)
 
 	if err != nil {
 		g.logger.
 			WithField("error", err.Error()).
-			Error("Failed to parse token payload from payload proxy response.")
-		return nil, err
+			Errorf("Failed to update the matchmaker backfill allocations endpoint.")
 	}
 
-	var tp tokenPayload
-	err = json.Unmarshal(payloadBytes, &tp)
-
-	if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Error("Failed to parse token payload from payload proxy response.")
-		return nil, err
-	}
-
-	c, err := g.getConfig()
-
-	// Get upid, env, allocationId
-	upid := tp.Upid
-	env := tp.Env
-	allocationId := c.AllocatedUUID
-
-	if len(env) == 0 {
-		// Hardcode env because the token endpoint keeps getting reverted
-		env = "9b2cd8fc-d4d3-49b7-b4cb-775145273626"
-	}
-
-	g.logger.Infof("Sending GET payload request: %s", fmt.Sprintf("%s/payload/%s", g.payloadProxyUrl, allocationId))
-
-	resp, err := g.httpClient.Get(fmt.Sprintf("%s/payload/%s", g.payloadProxyUrl, allocationId))
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-
-	g.logger.Infof("payload allocation response body: %s", string(bodyBytes[:]))
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", g.matchmakerUrl, upid, env, allocationId), http.NoBody)
-
-	if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Error("Failed to create backfill request.")
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	g.logger.Infof("Sending POST backfill approval request: %s", fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", g.matchmakerUrl, upid, env, allocationId))
-	resp, err = g.httpClient.Do(req)
-
-	if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Errorf("Failed to call the matchmaker backfill allocations endpoint.")
-		return nil, err
-	}
-
-	return resp, nil
+	return
 }
 
+// getJwtToken calls the payload proxy token endpoint to retrieve the token used for matchmaker backfill approval.
 func (g *Game) getJwtToken() (string, error) {
-	// Get the token from the payload proxy
-	resp, err := g.httpClient.Get(fmt.Sprintf("%s/token", g.payloadProxyUrl))
+	payloadProxyTokenUrl := fmt.Sprintf("%s/token", g.payloadProxyUrl)
+
+	g.logger.Debugf("Sending GET token request: %s", payloadProxyTokenUrl)
+	resp, err := g.httpClient.Get(payloadProxyTokenUrl)
 
 	if err != nil {
 		return "", err
@@ -253,6 +209,51 @@ func (g *Game) getJwtToken() (string, error) {
 	return tr.Token, nil
 }
 
+// updateBackfillAllocation calls the matchmaker backfill approval endpoint to update and keep the backfill ticket.
+// alive.
+func (g *Game) updateBackfillAllocation(c *config.Config, token string) error {
+	upid, env, err := g.parseJwtToken(token)
+
+	if err != nil {
+		return err
+	}
+
+	backfillApprovalUrl := fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", c.MatchmakerUrl, upid, env, c.AllocatedUUID)
+
+	req, err := http.NewRequest("POST", backfillApprovalUrl, http.NoBody)
+
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	g.logger.Debugf("Sending POST backfill approval request: %s", backfillApprovalUrl)
+	_, err = g.httpClient.Do(req)
+
+	return err
+}
+
+// parseJwtToken extracts the project id and environment id from the JWT token.
+func (g *Game) parseJwtToken(token string) (string, string, error) {
+	payloadBytes, err := base64.RawStdEncoding.DecodeString(strings.Split(token, ".")[1])
+
+	if err != nil {
+		return "", "", err
+	}
+
+	var tp tokenPayload
+	err = json.Unmarshal(payloadBytes, &tp)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	return tp.Upid, tp.Env, nil
+}
+
+// getConfig loads the config from the configuration file into memory.
 func (g *Game) getConfig() (*config.Config, error) {
 	for {
 		// Get Config from file
@@ -263,9 +264,6 @@ func (g *Game) getConfig() (*config.Config, error) {
 			// which results in two writes. The first write will produce an
 			// empty file, meaning JSON parsing will fail.
 			if !errors.Is(err, io.EOF) {
-				g.logger.
-					WithField("error", err.Error()).
-					Error("error loading config")
 				return nil, err
 			}
 
