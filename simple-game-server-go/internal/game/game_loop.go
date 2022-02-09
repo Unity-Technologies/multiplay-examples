@@ -144,6 +144,7 @@ func (g *Game) launchGame() {
 }
 
 func (g *Game) approveBackfillTicket() (*http.Response, error) {
+	g.logger.Infof("Sending GET token request: %s", fmt.Sprintf("%s/token", g.payloadProxyUrl))
 	token, err := g.getJwtToken()
 
 	if err != nil {
@@ -180,20 +181,38 @@ func (g *Game) approveBackfillTicket() (*http.Response, error) {
 	env := tp.Env
 	allocationId := c.AllocatedUUID
 
+	if len(env) == 0 {
+		// Hardcode env because the token endpoint keeps getting reverted
+		env = "9b2cd8fc-d4d3-49b7-b4cb-775145273626"
+	}
+
+	g.logger.Infof("Sending GET payload request: %s", fmt.Sprintf("%s/payload/%s", g.payloadProxyUrl, allocationId))
+
+	resp, err := g.httpClient.Get(fmt.Sprintf("%s/payload/%s", g.payloadProxyUrl, allocationId))
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+
+	g.logger.Infof("payload allocation response body: %s", string(bodyBytes[:]))
+
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", g.matchmakerUrl, upid, env, allocationId), http.NoBody)
 
 	if err != nil {
-		g.logger.Error("Failed to create backfill request.")
+		g.logger.
+			WithField("error", err.Error()).
+			Error("Failed to create backfill request.")
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 
-	resp, err := g.httpClient.Do(req)
+	g.logger.Infof("Sending POST backfill approval request: %s", fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals", g.matchmakerUrl, upid, env, allocationId))
+	resp, err = g.httpClient.Do(req)
 
 	if err != nil {
-		g.logger.Error("Failed to call the matchmaker backfill allocations endpoint.")
+		g.logger.
+			WithField("error", err.Error()).
+			Errorf("Failed to call the matchmaker backfill allocations endpoint.")
 		return nil, err
 	}
 

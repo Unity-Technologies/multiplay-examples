@@ -46,7 +46,7 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort, &http.Client{Timeout: time.Duration(1) * time.Second}, "localhost:8086", "matchmaking-ticket-gateway-stg.connected.unity3d.com")
+	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort, &http.Client{Timeout: time.Duration(1) * time.Second}, "http://localhost:8086", "http://matchmaking-ticket-gateway-stg.connected.unity3d.com")
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}
