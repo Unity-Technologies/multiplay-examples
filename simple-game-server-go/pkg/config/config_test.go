@@ -30,17 +30,23 @@ func Test_NewConfigFromFile(t *testing.T) {
 					"maxPlayers": "8",
 					"map": "my-map",
 					"gameType": "my-game",
-					"queryType": "sqp"
+					"queryType": "sqp",
+					"matchmakerUrl": "https://matchmaker.services.api.unity.com",
+					"payloadProxyUrl": "http://localhost:8086",
+					"enableBackfill": true
 				}`,
 			},
 			want: &Config{
-				AllocatedUUID: "alloc-uuid",
-				ReadBuffer:    1024,
-				WriteBuffer:   1024,
-				MaxPlayers:    8,
-				Map:           "my-map",
-				GameType:      "my-game",
-				QueryType:     "sqp",
+				AllocatedUUID:   "alloc-uuid",
+				ReadBuffer:      1024,
+				WriteBuffer:     1024,
+				MaxPlayers:      8,
+				Map:             "my-map",
+				GameType:        "my-game",
+				QueryType:       "sqp",
+				MatchmakerURL:   "https://matchmaker.services.api.unity.com",
+				PayloadProxyURL: "http://localhost:8086",
+				EnableBackfill:  &[]bool{true}[0],
 			},
 		},
 		{
@@ -51,13 +57,16 @@ func Test_NewConfigFromFile(t *testing.T) {
 				}`,
 			},
 			want: &Config{
-				AllocatedUUID: "alloc-uuid",
-				ReadBuffer:    40960,
-				WriteBuffer:   40960,
-				MaxPlayers:    4,
-				Map:           "Sample Map",
-				GameType:      "Sample Game",
-				QueryType:     "sqp",
+				AllocatedUUID:   "alloc-uuid",
+				ReadBuffer:      40960,
+				WriteBuffer:     40960,
+				MaxPlayers:      4,
+				Map:             "Sample Map",
+				GameType:        "Sample Game",
+				QueryType:       "sqp",
+				MatchmakerURL:   "https://matchmaker.services.api.unity.com",
+				PayloadProxyURL: "http://localhost:8086",
+				EnableBackfill:  &[]bool{false}[0],
 			},
 		},
 		{
@@ -71,7 +80,7 @@ func Test_NewConfigFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := path.Join(t.TempDir(), "config.json")
-			require.NoError(t, ioutil.WriteFile(f, []byte(tt.fields.configContent), 0600))
+			require.NoError(t, ioutil.WriteFile(f, []byte(tt.fields.configContent), 0o600))
 
 			got, err := NewConfigFromFile(f)
 			if (err != nil) != tt.wantErr {

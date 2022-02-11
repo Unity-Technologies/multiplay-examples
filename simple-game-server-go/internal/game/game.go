@@ -64,17 +64,11 @@ type (
 		// httpClient is an http client that is used to retrieve the token from the payload
 		// proxy as well as send backfill ticket approvals to the matchmaker
 		httpClient *http.Client
-
-		// payloadProxyUrl is the url for the payload proxy which is used to retrieve the token
-		payloadProxyUrl string
-
-		// matchmakerUrl is the url used to approve backfill tickets
-		matchmakerUrl string
 	}
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client, payloadProxyUrl string, matchmakerUrl string) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client) (*Game, error) {
 	g := &Game{
 		cfgFile:                     configPath,
 		gameEvents:                  make(chan event.Event, 1),
@@ -84,8 +78,6 @@ func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClie
 		port:                        port,
 		queryPort:                   queryPort,
 		httpClient:                  httpClient,
-		payloadProxyUrl:             payloadProxyUrl,
-		matchmakerUrl:               matchmakerUrl,
 	}
 
 	return g, nil

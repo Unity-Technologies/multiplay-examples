@@ -14,7 +14,7 @@ import (
 )
 
 // parseFlags parses the supported flags and returns the values supplied to these flags.
-func parseFlags(args []string) (config string, log string, port uint, queryPort uint, err error) {
+func parseFlags(args []string) (config string, log string, port uint, queryPort uint, logLevel string, err error) {
 	dir, _ := os.UserHomeDir()
 	f := flag.FlagSet{}
 
@@ -22,6 +22,7 @@ func parseFlags(args []string) (config string, log string, port uint, queryPort 
 	f.StringVar(&log, "log", filepath.Join(dir, "logs"), "path to the log directory to write to")
 	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
 	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
+	f.StringVar(&logLevel, "loglevel", "info", "log level for the logger")
 	err = f.Parse(args)
 
 	return
@@ -31,13 +32,21 @@ func main() {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
-	config, log, port, queryPort, err := parseFlags(os.Args[1:])
+	config, log, port, queryPort, logLevel, err := parseFlags(os.Args[1:])
 	if err != nil {
 		logger.WithError(err).Fatal("error parsing flags")
 	}
 
+	ll, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logger.WithError(err).Error("Couldn't parse log level, defaulting to info")
+		ll = logrus.InfoLevel
+	}
+
+	logger.SetLevel(ll)
+
 	if log != "" {
-		logFile, err := os.OpenFile(filepath.Join(log, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile(filepath.Join(log, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 		if err == nil {
 			defer logFile.Close()
 			logger.Out = logFile
@@ -46,7 +55,11 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort, &http.Client{Timeout: time.Duration(1) * time.Second}, "http://localhost:8086", config)
+	g, err := game.New(logger.WithField("allocation_uuid", ""),
+		config,
+		port,
+		queryPort,
+		&http.Client{Timeout: time.Duration(1) * time.Second})
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}
