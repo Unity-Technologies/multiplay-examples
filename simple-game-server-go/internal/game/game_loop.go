@@ -249,7 +249,7 @@ func (g *Game) updateBackfillAllocation(c *config.Config, token string) (*http.R
 		return nil, err
 	}
 
-	backfillApprovalURL := fmt.Sprintf("%s/api/v2/%s/%s/backfill/%s/approvals",
+	backfillApprovalURL := fmt.Sprintf("%s/api/v2/projects/%s/environments/%s/backfill/%s/approvals",
 		c.MatchmakerURL,
 		upid,
 		env,
