@@ -203,7 +203,7 @@ func (g *Game) approveBackfillTicket(c *config.Config) (*http.Response, error) {
 func (g *Game) getJwtToken(c *config.Config) (string, error) {
 	payloadProxyTokenURL := fmt.Sprintf("%s/token", c.PayloadProxyURL)
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", payloadProxyTokenURL, http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", payloadProxyTokenURL, http.NoBody)
 	if err != nil {
 		return "", err
 	}
