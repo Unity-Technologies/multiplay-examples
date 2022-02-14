@@ -33,7 +33,7 @@ func Test_NewConfigFromFile(t *testing.T) {
 					"queryType": "sqp",
 					"matchmakerUrl": "https://matchmaker.services.api.unity.com",
 					"payloadProxyUrl": "http://localhost:8086",
-					"enableBackfill": true
+					"enableBackfill": "true"
 				}`,
 			},
 			want: &Config{
@@ -46,7 +46,7 @@ func Test_NewConfigFromFile(t *testing.T) {
 				QueryType:       "sqp",
 				MatchmakerURL:   "https://matchmaker.services.api.unity.com",
 				PayloadProxyURL: "http://localhost:8086",
-				EnableBackfill:  &[]bool{true}[0],
+				EnableBackfill:  "true",
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func Test_NewConfigFromFile(t *testing.T) {
 				QueryType:       "sqp",
 				MatchmakerURL:   "https://matchmaker.services.api.unity.com",
 				PayloadProxyURL: "http://localhost:8086",
-				EnableBackfill:  &[]bool{false}[0],
+				EnableBackfill:  "false",
 			},
 		},
 		{

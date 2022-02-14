@@ -36,7 +36,7 @@ type Config struct {
 	PayloadProxyURL string `json:"payloadProxyUrl"`
 
 	// EnableBackfill enables backfill during the game loop.
-	EnableBackfill *bool `json:"enableBackfill"`
+	EnableBackfill string `json:"enableBackfill"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -87,9 +87,8 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 		cfg.PayloadProxyURL = "http://localhost:8086"
 	}
 
-	if cfg.EnableBackfill == nil {
-		bf := false
-		cfg.EnableBackfill = &bf
+	if cfg.EnableBackfill == "" {
+		cfg.EnableBackfill = "false"
 	}
 
 	return cfg, nil

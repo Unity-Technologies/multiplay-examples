@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -138,16 +139,23 @@ func (g *Game) launchGame() {
 
 			return
 		}
-		if !*c.EnableBackfill {
+		bf, err := strconv.ParseBool(c.EnableBackfill)
+		if !bf {
+			if err != nil {
+				g.logger.
+					WithField("error", err.Error()).
+					Error("error parsing enableBackfill field in config")
+			}
 			return
 		}
 		for {
 			resp, err := g.approveBackfillTicket(c)
-			_ = resp.Body.Close()
 			if err != nil {
 				g.logger.
 					WithField("error", err.Error()).
 					Error("encountered an error while in approve backfill loop.")
+			} else {
+				_ = resp.Body.Close()
 			}
 			time.Sleep(1 * time.Second)
 		}
