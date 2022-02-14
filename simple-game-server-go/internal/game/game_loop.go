@@ -146,7 +146,7 @@ func (g *Game) launchGame() {
 					WithField("error", err.Error()).
 					Error("error parsing enableBackfill field in config")
 			}
-			
+
 			return
 		}
 		for {
