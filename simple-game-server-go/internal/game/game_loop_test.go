@@ -64,7 +64,7 @@ func Test_approveBackfillTicket(t *testing.T) {
 			"payloadProxyUrl": "%s"
 			}`, mmBackfillServer.URL, payloadProxyServer.URL)), 0o600))
 
-	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: time.Duration(1) * time.Second})
+	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: 1 * time.Second})
 	require.NoError(t, err)
 	require.NotNil(t, g)
 

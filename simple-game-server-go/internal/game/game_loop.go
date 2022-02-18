@@ -26,12 +26,6 @@ type (
 		Token string
 		Error string
 	}
-
-	// tokenPayload represents the environment and project id of a token.
-	tokenPayload struct {
-		Upid string `json:"project_guid"`
-		Env  string `json:"environment_id"`
-	}
 )
 
 type errorWrapper struct {
@@ -236,7 +230,6 @@ func (g *Game) getJwtToken(c *config.Config) (string, error) {
 		return "", err
 	}
 
-	g.logger.Debugf("Token: %s", tr.Token)
 	return tr.Token, nil
 }
 

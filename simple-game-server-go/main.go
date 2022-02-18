@@ -58,6 +58,7 @@ func main() {
 
 	// Temporary fix for calling https and getting x509 errors due to invalid certificate on game server
 	tr := &http.Transport{
+		// lint:ignore G402
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 

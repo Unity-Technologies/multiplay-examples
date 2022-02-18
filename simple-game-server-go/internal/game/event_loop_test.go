@@ -18,7 +18,7 @@ func Test_watchConfig(t *testing.T) {
 
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0o600))
 
-	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: time.Duration(1) * time.Second})
+	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: 1 * time.Second})
 	require.NoError(t, err)
 	require.NotNil(t, g)
 
