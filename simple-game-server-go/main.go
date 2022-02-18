@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"net/http"
 	"os"
@@ -55,11 +56,16 @@ func main() {
 		}
 	}
 
+	// Temporary fix for calling https and getting x509 errors due to invalid certificate on game server
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
 	g, err := game.New(logger.WithField("allocation_uuid", ""),
 		config,
 		port,
 		queryPort,
-		&http.Client{Timeout: time.Duration(1) * time.Second})
+		&http.Client{Timeout: time.Duration(1) * time.Second, Transport: tr})
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}

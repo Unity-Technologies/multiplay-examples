@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -245,15 +243,8 @@ func (g *Game) getJwtToken(c *config.Config) (string, error) {
 // updateBackfillAllocation calls the matchmaker backfill approval endpoint to update and keep the backfill ticket
 // alive.
 func (g *Game) updateBackfillAllocation(c *config.Config, token string) (*http.Response, error) {
-	upid, env, err := g.parseJwtToken(token)
-	if err != nil {
-		return nil, err
-	}
-
-	backfillApprovalURL := fmt.Sprintf("%s/v2/projects/%s/environments/%s/backfill/%s/approvals",
+	backfillApprovalURL := fmt.Sprintf("%s/v2/backfill/%s/approvals",
 		c.MatchmakerURL,
-		upid,
-		env,
 		c.AllocatedUUID)
 
 	req, err := http.NewRequestWithContext(context.Background(), "POST", backfillApprovalURL, http.NoBody)
@@ -268,23 +259,6 @@ func (g *Game) updateBackfillAllocation(c *config.Config, token string) (*http.R
 	resp, err := g.httpClient.Do(req)
 
 	return resp, err
-}
-
-// parseJwtToken extracts the project id and environment id from the JWT token.
-func (g *Game) parseJwtToken(token string) (string, string, error) {
-	payloadBytes, err := base64.RawStdEncoding.DecodeString(strings.Split(token, ".")[1])
-	if err != nil {
-		return "", "", err
-	}
-
-	var tp tokenPayload
-	err = json.Unmarshal(payloadBytes, &tp)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	return tp.Upid, tp.Env, nil
 }
 
 // getConfig loads the config from the configuration file into memory.
