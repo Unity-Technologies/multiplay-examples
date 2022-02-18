@@ -238,6 +238,7 @@ func (g *Game) getJwtToken(c *config.Config) (string, error) {
 		return "", err
 	}
 
+	g.logger.Debugf("Token: %s", tr.Token)
 	return tr.Token, nil
 }
 
@@ -249,7 +250,7 @@ func (g *Game) updateBackfillAllocation(c *config.Config, token string) (*http.R
 		return nil, err
 	}
 
-	backfillApprovalURL := fmt.Sprintf("%s/api/v2/projects/%s/environments/%s/backfill/%s/approvals",
+	backfillApprovalURL := fmt.Sprintf("%s/v2/projects/%s/environments/%s/backfill/%s/approvals",
 		c.MatchmakerURL,
 		upid,
 		env,
