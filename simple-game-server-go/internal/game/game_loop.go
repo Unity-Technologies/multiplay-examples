@@ -51,6 +51,7 @@ func (g *Game) allocated(c *config.Config) {
 		return
 	}
 
+	g.logger = g.logger.WithField("launching game", c.AllocatedUUID)
 	go g.launchGame()
 }
 
