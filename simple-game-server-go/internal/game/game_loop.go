@@ -61,7 +61,15 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 		return
 	}
 
-	g.sdkClient.ReadyForPlayers(serverID, allocationUUID)
+	err = g.sdkClient.ReadyForPlayers(serverID, allocationUUID)
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error registering server as ready for players")
+
+		return
+	}
+
 	go g.launchGame()
 }
 
