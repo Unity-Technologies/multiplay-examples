@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -51,6 +52,16 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 		return
 	}
 
+	serverID, err := strconv.ParseInt(c.ServerID, 10, 64)
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error parsing serverID to int64")
+
+		return
+	}
+
+	g.sdkClient.ReadyForPlayers(serverID, allocationUUID)
 	go g.launchGame()
 }
 
