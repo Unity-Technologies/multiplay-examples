@@ -3,6 +3,8 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -24,6 +26,7 @@ type (
 )
 
 func Test_approveBackfillTicket(t *testing.T) {
+	// ARRANGE
 	l := logrus.NewEntry(logrus.New())
 	p := path.Join(t.TempDir(), "config.json")
 	token := "eyJhbGciOiJSUzI1NiIsImtpZCI6IjAwOWFkOGYzYWJhN2U4NjRkNTg5NTVmNzYwMWY1YTgzNDg2OWJjNTMiLCJ0eXAiOiJKV1QifQ." +
@@ -68,10 +71,16 @@ func Test_approveBackfillTicket(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, g)
 
-	c, err := g.getConfig()
+	c, err := config.NewConfigFromFile(g.cfgFile)
 	require.NoError(t, err)
 
-	resp, err := g.approveBackfillTicket(c)
+	g.backfillParams = &proto.BackfillParams{
+		MatchmakerURL:   c.MatchmakerURL,
+		PayloadProxyURL: c.PayloadProxyURL,
+		AllocatedUUID:   c.AllocatedUUID,
+	}
+
+	resp, err := g.approveBackfillTicket()
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	defer resp.Body.Close()

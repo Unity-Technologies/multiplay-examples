@@ -1,13 +1,9 @@
 package game
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"strconv"
 	"sync/atomic"
 	"syscall"
@@ -23,18 +19,12 @@ import (
 type (
 	// tokenResponse is the representation of a token and an error from the payload proxy service.
 	tokenResponse struct {
-		Token string
-		Error string
+		Token string `json:"token"`
+		Error string `json:"error"`
 	}
 )
 
-type errorWrapper struct {
-	message string
-}
-
-func (e *errorWrapper) Error() string {
-	return e.message
-}
+var tokenError = errors.New("failed to retrieve JWT token")
 
 // processEvents handles processing events for the operation of the
 // game server, such as allocating and deallocating the server.
@@ -62,6 +52,20 @@ func (g *Game) allocated(c *config.Config) {
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
+	}
+	bf, err := strconv.ParseBool(c.EnableBackfill)
+	if bf {
+		g.backfillParams = &proto.BackfillParams{
+			MatchmakerURL:   c.MatchmakerURL,
+			PayloadProxyURL: c.PayloadProxyURL,
+			AllocatedUUID:   c.AllocatedUUID,
+		}
+	} else {
+		if err != nil {
+			g.logger.
+				WithField("error", err.Error()).
+				Error("error parsing enableBackfill field in config")
+		}
 	}
 
 	if err := g.switchQueryProtocol(*c); err != nil {
@@ -122,37 +126,7 @@ func (g *Game) launchGame() {
 
 	g.gameBind = gs
 
-	go func() {
-		c, err := g.getConfig()
-		if err != nil {
-			g.logger.
-				WithField("error", err.Error()).
-				Error("error loading config")
-
-			return
-		}
-		bf, err := strconv.ParseBool(c.EnableBackfill)
-		if !bf {
-			if err != nil {
-				g.logger.
-					WithField("error", err.Error()).
-					Error("error parsing enableBackfill field in config")
-			}
-
-			return
-		}
-		for {
-			resp, err := g.approveBackfillTicket(c)
-			if err != nil {
-				g.logger.
-					WithField("error", err.Error()).
-					Error("encountered an error while in approve backfill loop.")
-			} else {
-				_ = resp.Body.Close()
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	go g.keepAliveBackfill()
 
 	for {
 		client, err := g.acceptClient(g.gameBind)
@@ -167,110 +141,6 @@ func (g *Game) launchGame() {
 		}
 
 		go g.handleClient(client)
-	}
-}
-
-// approveBackfillTicket is called in a loop to update and keep the backfill ticket alive.
-func (g *Game) approveBackfillTicket(c *config.Config) (*http.Response, error) {
-	token, err := g.getJwtToken(c)
-	if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Error("Failed to get token from payload proxy.")
-
-		return nil, err
-	}
-
-	resp, err := g.updateBackfillAllocation(c, token)
-	if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Errorf("Failed to update the matchmaker backfill allocations endpoint.")
-	}
-
-	return resp, err
-}
-
-// getJwtToken calls the payload proxy token endpoint to retrieve the token used for matchmaker backfill approval.
-func (g *Game) getJwtToken(c *config.Config) (string, error) {
-	payloadProxyTokenURL := fmt.Sprintf("%s/token", c.PayloadProxyURL)
-
-	req, err := http.NewRequestWithContext(context.Background(), "GET", payloadProxyTokenURL, http.NoBody)
-	if err != nil {
-		return "", err
-	}
-
-	g.logger.Debugf("Sending GET token request: %s", payloadProxyTokenURL)
-	resp, err := g.httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", &errorWrapper{resp.Status}
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var tr tokenResponse
-	err = json.Unmarshal(bodyBytes, &tr)
-
-	if err != nil {
-		return "", err
-	}
-
-	if len(tr.Error) != 0 {
-		err = &errorWrapper{tr.Error}
-
-		return "", err
-	}
-
-	return tr.Token, nil
-}
-
-// updateBackfillAllocation calls the matchmaker backfill approval endpoint to update and keep the backfill ticket
-// alive.
-func (g *Game) updateBackfillAllocation(c *config.Config, token string) (*http.Response, error) {
-	backfillApprovalURL := fmt.Sprintf("%s/v2/backfill/%s/approvals",
-		c.MatchmakerURL,
-		c.AllocatedUUID)
-
-	req, err := http.NewRequestWithContext(context.Background(), "POST", backfillApprovalURL, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-
-	g.logger.Debugf("Sending POST backfill approval request: %s", backfillApprovalURL)
-	resp, err := g.httpClient.Do(req)
-
-	return resp, err
-}
-
-// getConfig loads the config from the configuration file into memory.
-func (g *Game) getConfig() (*config.Config, error) {
-	for {
-		// Get Config from file
-		c, err := config.NewConfigFromFile(g.cfgFile)
-		if err != nil {
-			// Multiplay truncates the file when a deallocation occurs,
-			// which results in two writes. The first write will produce an
-			// empty file, meaning JSON parsing will fail.
-			if !errors.Is(err, io.EOF) {
-				return nil, err
-			}
-
-			continue
-		}
-
-		return c, nil
 	}
 }
 

@@ -57,6 +57,9 @@ type (
 		// for example current players, map name
 		state *proto.QueryState
 
+		// backfillParams represents urls and query params used to keep alive backfill tickets.
+		backfillParams *proto.BackfillParams
+
 		// wg handles synchronising termination of all active
 		// goroutines this game manages
 		wg sync.WaitGroup

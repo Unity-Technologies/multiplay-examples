@@ -28,6 +28,13 @@ type (
 		Map            string
 		Port           uint16
 	}
+
+	// BackfillParams represents urls and query params used to keep alive backfill tickets.
+	BackfillParams struct {
+		MatchmakerURL   string
+		PayloadProxyURL string
+		AllocatedUUID   string
+	}
 )
 
 // WireWrite writes the provided data to resp with the provided WireEncoder w.
