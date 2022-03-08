@@ -3,8 +3,6 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +10,9 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
