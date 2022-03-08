@@ -24,7 +24,7 @@ type (
 	}
 )
 
-var tokenError = errors.New("failed to retrieve JWT token")
+var errTokenFetch = errors.New("failed to retrieve JWT token")
 
 // processEvents handles processing events for the operation of the
 // game server, such as allocating and deallocating the server.
@@ -60,8 +60,7 @@ func (g *Game) allocated(c *config.Config) {
 			PayloadProxyURL: c.PayloadProxyURL,
 			AllocatedUUID:   c.AllocatedUUID,
 		}
-	} else {
-		if err != nil {
+	} else if err != nil {
 			g.logger.
 				WithField("error", err.Error()).
 				Error("error parsing enableBackfill field in config")

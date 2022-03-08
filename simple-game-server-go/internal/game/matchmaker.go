@@ -66,7 +66,7 @@ func (g *Game) getJwtToken() (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", tokenError
+		return "", errTokenFetch
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -82,7 +82,7 @@ func (g *Game) getJwtToken() (string, error) {
 	}
 
 	if len(tr.Error) != 0 {
-		return "", tokenError
+		return "", errTokenFetch
 	}
 
 	return tr.Token, nil
