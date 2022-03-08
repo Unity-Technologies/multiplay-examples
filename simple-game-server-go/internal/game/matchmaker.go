@@ -44,6 +44,9 @@ func (g *Game) approveBackfillTicket() (*http.Response, error) {
 			WithField("error", err.Error()).
 			Errorf("Failed to update the matchmaker backfill allocations endpoint.")
 	}
+	if resp == nil || resp.StatusCode != http.StatusOK {
+		err = errBackfillApprove
+	}
 
 	return resp, err
 }

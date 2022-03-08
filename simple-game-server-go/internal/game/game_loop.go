@@ -25,6 +25,7 @@ type (
 )
 
 var errTokenFetch = errors.New("failed to retrieve JWT token")
+var errBackfillApprove = errors.New("failed to approve backfill ticket")
 
 // processEvents handles processing events for the operation of the
 // game server, such as allocating and deallocating the server.
