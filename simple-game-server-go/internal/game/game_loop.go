@@ -61,13 +61,12 @@ func (g *Game) allocated(c *config.Config) {
 			AllocatedUUID:   c.AllocatedUUID,
 		}
 	} else if err != nil {
-			g.logger.
-				WithField("error", err.Error()).
-				Error("error parsing enableBackfill field in config")
-		}
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error parsing enableBackfill field in config")
 	}
 
-	if err = g.switchQueryProtocol(*c); err != nil {
+	if err := g.switchQueryProtocol(*c); err != nil {
 		g.logger.
 			WithField("error", err.Error()).
 			Error("error switching query protocol")
