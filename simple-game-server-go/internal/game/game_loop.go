@@ -67,7 +67,7 @@ func (g *Game) allocated(c *config.Config) {
 		}
 	}
 
-	if err := g.switchQueryProtocol(*c); err != nil {
+	if err = g.switchQueryProtocol(*c); err != nil {
 		g.logger.
 			WithField("error", err.Error()).
 			Error("error switching query protocol")
