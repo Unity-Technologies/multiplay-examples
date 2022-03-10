@@ -55,6 +55,7 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 	serverID, err := strconv.ParseInt(c.ServerID, 10, 64)
 	if err != nil {
 		g.logger.
+			WithField("server_id", c.ServerID).
 			WithField("error", err.Error()).
 			Error("error parsing serverID to int64")
 
@@ -69,6 +70,9 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 
 		return
 	}
+	g.logger.
+		WithField("server_id", c.ServerID).
+		Info("ready for players")
 
 	go g.launchGame()
 }
