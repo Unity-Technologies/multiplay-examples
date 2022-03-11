@@ -28,6 +28,7 @@ func (g *Game) keepAliveBackfill() {
 			}
 		case <-g.done:
 			ticker.Stop()
+
 			return
 		}
 	}
