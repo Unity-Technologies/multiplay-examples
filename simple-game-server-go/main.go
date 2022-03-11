@@ -46,11 +46,13 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""),
+	g, err := game.New(
+		logger.WithField("allocation_uuid", ""),
 		config,
 		port,
 		queryPort,
-		&http.Client{Timeout: time.Duration(1) * time.Second})
+		&http.Client{Timeout: time.Duration(1) * time.Second},
+	)
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}

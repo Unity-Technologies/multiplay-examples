@@ -14,16 +14,22 @@ func (g *Game) keepAliveBackfill() {
 		return
 	}
 
+	ticker := time.NewTicker(1 * time.Second)
 	for {
-		resp, err := g.approveBackfillTicket()
-		if err != nil {
-			g.logger.
-				WithField("error", err.Error()).
-				Error("encountered an error while in approve backfill loop.")
-		} else {
-			_ = resp.Body.Close()
+		select {
+		case <-ticker.C:
+			resp, err := g.approveBackfillTicket()
+			if err != nil {
+				g.logger.
+					WithField("error", err.Error()).
+					Error("encountered an error while in approve backfill loop.")
+			} else {
+				_ = resp.Body.Close()
+			}
+		case <-g.done:
+			ticker.Stop()
+			return
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 
