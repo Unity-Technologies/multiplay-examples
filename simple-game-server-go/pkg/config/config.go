@@ -28,6 +28,15 @@ type Config struct {
 
 	// QueryType determines the protocol used for query responses.
 	QueryType string `json:"queryType"`
+
+	// MatchmakerURL is the public domain name used for approving backfill tickets.
+	MatchmakerURL string `json:"matchmakerUrl"`
+
+	// PayloadProxyURL is the url for the payload proxy which is used to retrieve the token.
+	PayloadProxyURL string `json:"payloadProxyUrl"`
+
+	// EnableBackfill enables backfill during the game loop.
+	EnableBackfill string `json:"enableBackfill"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -68,6 +77,18 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 
 	if cfg.QueryType == "" {
 		cfg.QueryType = "sqp"
+	}
+
+	if cfg.MatchmakerURL == "" {
+		cfg.MatchmakerURL = "https://matchmaker.services.api.unity.com"
+	}
+
+	if cfg.PayloadProxyURL == "" {
+		cfg.PayloadProxyURL = "http://localhost:8086"
+	}
+
+	if cfg.EnableBackfill == "" {
+		cfg.EnableBackfill = "false"
 	}
 
 	return cfg, nil

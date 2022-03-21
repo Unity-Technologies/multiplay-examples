@@ -2,8 +2,10 @@ package game
 
 import (
 	"io/ioutil"
+	"net/http"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/sirupsen/logrus"
@@ -14,9 +16,9 @@ func Test_watchConfig(t *testing.T) {
 	l := logrus.NewEntry(logrus.New())
 	p := path.Join(t.TempDir(), "config.json")
 
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0600))
+	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0o600))
 
-	g, err := New(l, p, 9000, 9001)
+	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: 1 * time.Second})
 	require.NoError(t, err)
 	require.NotNil(t, g)
 
@@ -27,7 +29,7 @@ func Test_watchConfig(t *testing.T) {
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
 		"allocatedUUID": "alloc-uuid",
 		"maxPlayers": "12"
-	}`), 0600))
+	}`), 0o600))
 	ev := <-g.gameEvents
 	require.Equal(t, event.Allocated, ev.Type)
 	require.Equal(t, "alloc-uuid", ev.Config.AllocatedUUID)
@@ -37,7 +39,7 @@ func Test_watchConfig(t *testing.T) {
 	// Deallocate
 	require.NoError(t, ioutil.WriteFile(p, []byte(`{
 		"allocatedUUID": ""
-	}`), 0600))
+	}`), 0o600))
 	ev = <-g.gameEvents
 	require.Equal(t, event.Deallocated, ev.Type)
 	require.Equal(t, "sqp", ev.Config.QueryType)

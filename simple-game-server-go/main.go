@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/game"
 	"github.com/sirupsen/logrus"
@@ -35,7 +37,7 @@ func main() {
 	}
 
 	if log != "" {
-		logFile, err := os.OpenFile(filepath.Join(log, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		logFile, err := os.OpenFile(filepath.Join(log, "server.log"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 		if err == nil {
 			defer logFile.Close()
 			logger.Out = logFile
@@ -44,7 +46,13 @@ func main() {
 		}
 	}
 
-	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
+	g, err := game.New(
+		logger.WithField("allocation_uuid", ""),
+		config,
+		port,
+		queryPort,
+		&http.Client{Timeout: time.Duration(1) * time.Second},
+	)
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}
