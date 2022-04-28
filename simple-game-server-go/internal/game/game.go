@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Unity-Technologies/mp-sdk-daemon-poc/daemon/pkg/client"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
@@ -61,7 +61,7 @@ type (
 		wg sync.WaitGroup
 
 		// sdkClient is a client for the Multiplay SDK.
-		sdkClient *client.SDKDaemonClient
+		sdkClient *sdkclient.SDKDaemonClient
 	}
 )
 
@@ -91,21 +91,36 @@ func (g *Game) Start() error {
 		return fmt.Errorf("parse server ID: %w", err)
 	}
 
-	g.sdkClient = client.NewSDKDaemonClient(c.SDKDaemonURL, sid)
+	// TODO(pw)
+	g.logger.Info("about to spin up sdkclient")
+
+	g.sdkClient = sdkclient.NewSDKDaemonClient(c.SDKDaemonURL, sid)
 
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
+	// TODO(pw)
+	g.logger.Info("about to spin up 2 go routines for sdkclient")
+
 	go g.sdkErrorHandler()
 	go g.processEvents()
+
+	// TODO(pw)
+	g.logger.Info("about to assign sdkDeamon event handlers")
 
 	g.sdkClient.OnAllocate(g.allocateHandler)
 	g.sdkClient.OnDeallocate(g.deallocateHandler)
 
+	// TODO(pw)
+	g.logger.Info("about to connect to sdkDeamon")
+
 	if err = g.sdkConnect(); err != nil {
 		return err
 	}
+
+	// TODO(pw)
+	g.logger.Info("connected to sdkDeamon")
 
 	g.logger.
 		WithField("port", g.port).

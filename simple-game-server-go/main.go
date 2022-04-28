@@ -44,14 +44,23 @@ func main() {
 		}
 	}
 
+	// TODO(pw)
+	logger.Info("about to get new game")
+
 	g, err := game.New(logger.WithField("allocation_uuid", ""), config, port, queryPort)
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}
 
+	// TODO(pw)
+	logger.Info("about to start new game")
+
 	if err = g.Start(); err != nil {
 		logger.WithError(err).Fatal("unable to start game")
 	}
+
+	// TODO(pw)
+	logger.Info("game started")
 
 	// The Multiplay process management daemon will signal the game server to
 	// stop. A graceful stop signal (SIGTERM) will be sent if the game server
