@@ -1,0 +1,8 @@
+
+The matchmaker is running in standalone mode.
+
+In this mode it will still matchmake players in groups. however the match will send players to a TCP mirror running
+inside this simple matchmaker.
+
+This is designed to allow you to play around with how this matchmaker works fully standalone and is not representative
+of a full allocation/deallocation flow you would see in a real game.
