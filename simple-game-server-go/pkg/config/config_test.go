@@ -24,13 +24,12 @@ func Test_NewConfigFromFile(t *testing.T) {
 			name: "loads config",
 			fields: fields{
 				configContent: `{
+					"allocatedUUID": "alloc-uuid",
 					"readBuffer": "1024",
 					"writeBuffer": "1024",
 					"maxPlayers": "8",
 					"map": "my-map",
 					"gameType": "my-game",
-					"queryType": "sqp",
-					"sdkDaemonURL": "localhost:1234"
 					"queryType": "sqp",
 					"matchmakerUrl": "https://matchmaker.services.api.unity.com",
 					"payloadProxyUrl": "http://localhost:8086",
@@ -38,13 +37,6 @@ func Test_NewConfigFromFile(t *testing.T) {
 				}`,
 			},
 			want: &Config{
-				ReadBuffer:   1024,
-				WriteBuffer:  1024,
-				MaxPlayers:   8,
-				Map:          "my-map",
-				GameType:     "my-game",
-				QueryType:    "sqp",
-				SDKDaemonURL: "localhost:1234",
 				AllocatedUUID:   "alloc-uuid",
 				ReadBuffer:      1024,
 				WriteBuffer:     1024,
@@ -60,16 +52,11 @@ func Test_NewConfigFromFile(t *testing.T) {
 		{
 			name: "applies defaults",
 			fields: fields{
-				configContent: `{}`,
+				configContent: `{
+					"allocatedUUID": "alloc-uuid"
+				}`,
 			},
 			want: &Config{
-				ReadBuffer:   40960,
-				WriteBuffer:  40960,
-				MaxPlayers:   4,
-				Map:          "Sample Map",
-				GameType:     "Sample Game",
-				QueryType:    "sqp",
-				SDKDaemonURL: "localhost:5000",
 				AllocatedUUID:   "alloc-uuid",
 				ReadBuffer:      40960,
 				WriteBuffer:     40960,

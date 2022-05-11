@@ -14,7 +14,7 @@ const (
 	RequestTimeout      = 2 * time.Second
 	ReadyForPlayersPath = "/v1/server/%d/allocation/%s/ready-for-players"
 	// SDK_DAEMON_URL represent sdk daemon default url
-	SDK_DAEMON_URL = "localhost:8086"
+	SDK_DAEMON_URL = "http://localhost:8086"
 )
 
 // SDKDaemonClient provides a client for the SDK daemon.

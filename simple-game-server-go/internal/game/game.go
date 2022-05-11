@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -44,6 +45,10 @@ type (
 
 		// queryBind is a UDP endpoint which responds to game queries
 		queryBind *udpBinding
+
+		// internalEventProcessorReady is a channel that, when written to,
+		// indicates that the internal event processor is ready.
+		internalEventProcessorReady chan struct{}
 
 		// queryPort is the port number the game query server will listen on
 		queryPort uint
@@ -95,7 +100,12 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	g.sdkClient = sdkclient.NewSDKDaemonClient(c.SDKDaemonURL, g.logger)
+	u, err := url.Parse(c.PayloadProxyURL)
+	if err != nil {
+		return fmt.Errorf("parsing PayloadProxyURL url, err: %s", err.Error())
+	}
+
+	g.sdkClient = sdkclient.NewSDKDaemonClient(u.Host, g.logger)
 
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err

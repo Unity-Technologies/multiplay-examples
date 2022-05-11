@@ -10,6 +10,9 @@ import (
 
 // Config represents the game server configuration.
 type Config struct {
+	// AllocatedUUID is the allocation ID provided to an event.
+	AllocatedUUID string `json:"allocatedUUID"`
+
 	// ReadBuffer is the size of the UDP connection read buffer.
 	ReadBuffer int `json:"readBuffer,string"`
 
@@ -30,9 +33,6 @@ type Config struct {
 
 	// ServerID is the Multiplay game server ID.
 	ServerID string `json:"serverID"`
-
-	// SDKDaemonURL is the URL to the SDK daemon.
-	SDKDaemonURL string `json:"sdkDaemonURL"`
 
 	// MatchmakerURL is the public domain name used for approving backfill tickets.
 	MatchmakerURL string `json:"matchmakerUrl"`
@@ -84,16 +84,12 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 		cfg.QueryType = "sqp"
 	}
 
-	if cfg.SDKDaemonURL == "" {
-		cfg.SDKDaemonURL = sdkclient.SDK_DAEMON_URL
-	}
-
 	if cfg.MatchmakerURL == "" {
 		cfg.MatchmakerURL = "https://matchmaker.services.api.unity.com"
 	}
 
 	if cfg.PayloadProxyURL == "" {
-		cfg.PayloadProxyURL = "http://localhost:8086"
+		cfg.PayloadProxyURL = sdkclient.SDK_DAEMON_URL
 	}
 
 	if cfg.EnableBackfill == "" {
