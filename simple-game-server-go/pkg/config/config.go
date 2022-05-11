@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 )
 
 // Config represents the game server configuration.
@@ -74,7 +76,7 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 	}
 
 	if cfg.SDKDaemonURL == "" {
-		cfg.SDKDaemonURL = "localhost:5000"
+		cfg.SDKDaemonURL = sdkclient.SDK_DAEMON_URL
 	}
 
 	return cfg, nil

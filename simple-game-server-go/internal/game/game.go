@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 
@@ -14,6 +13,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
+
+const ()
 
 type (
 	// Game represents an instance of a game running on this server.
@@ -86,41 +87,26 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	sid, err := strconv.ParseInt(c.ServerID, 10, 64)
-	if err != nil {
-		return fmt.Errorf("parse server ID: %w", err)
-	}
-
-	// TODO(pw)
-	g.logger.Info("about to spin up sdkclient")
-
-	g.sdkClient = sdkclient.NewSDKDaemonClient(c.SDKDaemonURL, sid)
+	g.sdkClient = sdkclient.NewSDKDaemonClient(c.SDKDaemonURL, g.logger)
 
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
-	// TODO(pw)
-	g.logger.Info("about to spin up 2 go routines for sdkclient")
-
 	go g.sdkErrorHandler()
 	go g.processEvents()
-
-	// TODO(pw)
-	g.logger.Info("about to assign sdkDeamon event handlers")
 
 	g.sdkClient.OnAllocate(g.allocateHandler)
 	g.sdkClient.OnDeallocate(g.deallocateHandler)
 
-	// TODO(pw)
-	g.logger.Info("about to connect to sdkDeamon")
-
-	if err = g.sdkConnect(); err != nil {
+	// we need to subscribe before connect
+	if err = g.sdkClient.Subscribe(c.ServerID); err != nil {
 		return err
 	}
 
-	// TODO(pw)
-	g.logger.Info("connected to sdkDeamon")
+	if err = g.sdkConnect(); err != nil {
+		return fmt.Errorf("game start, failed connect to sdkDaemon" + err.Error())
+	}
 
 	g.logger.
 		WithField("port", g.port).
@@ -158,7 +144,7 @@ func (g *Game) sdkConnect() (cerr error) {
 		case <-g.done:
 			return cerr
 		default:
-			if err := g.sdkClient.Subscribe(); err != nil {
+			if err := g.sdkClient.Connect(); err != nil {
 				cerr = multierror.Append(cerr, err)
 				time.Sleep(2 * time.Second)
 

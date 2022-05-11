@@ -7,11 +7,14 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge-go"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	RequestTimeout      = 2 * time.Second
 	ReadyForPlayersPath = "/v1/server/%d/allocation/%s/ready-for-players"
+	// SDK_DAEMON_URL represent sdk daemon default url
+	SDK_DAEMON_URL = "localhost:8086"
 )
 
 // SDKDaemonClient provides a client for the SDK daemon.
@@ -20,31 +23,55 @@ const (
 type SDKDaemonClient struct {
 	client *centrifugeClientWrapper
 	url    string
+	logger *logrus.Entry
 }
 
 // NewSDKDaemonClient returns an SDK Daemon client configured to connect to the
 // daemon on the given url.
-func NewSDKDaemonClient(url string, serverID int64) *SDKDaemonClient {
-	//wsURL := fmt.Sprintf("ws://%s/v1/subscribe/%d", url, serverID)
+func NewSDKDaemonClient(url string, l *logrus.Entry) *SDKDaemonClient {
 	wsURL := fmt.Sprintf("ws://%s/v1/connection/websocket", url)
 
 	sc := &SDKDaemonClient{
 		client: &centrifugeClientWrapper{
-			Client: centrifuge.NewJsonClient(wsURL, centrifuge.Config{}),
+			Client: centrifuge.NewJsonClient(wsURL, centrifuge.DefaultConfig()),
 			errc:   make(chan error),
 		},
-		url: url,
+		url:    url,
+		logger: l,
 	}
-
-	sc.client.Client.OnMessage(sc.client)
 
 	return sc
 }
 
-// Subscribe connects to the SDK daemon and subscribes to events for this server
+// Connect subscribes connects to the SDK daemon and subscribes to events for this server
 // identified by its process ID.
-func (s *SDKDaemonClient) Subscribe() error {
+func (s *SDKDaemonClient) Connect() error {
 	return s.client.Connect()
+}
+
+// Subscribe creates subscription channel identified by server ID and subscribe to it.
+func (s *SDKDaemonClient) Subscribe(channel string) error {
+	sub, err := s.client.NewSubscription(channel)
+	if err != nil {
+		return fmt.Errorf("new subscription: %w", err)
+	}
+
+	s.logger.
+		WithField("channel", sub.Channel()).
+		WithField("NewSubscription", sub).
+		Info("subscription created")
+
+	sub.OnPublish(s.client)
+
+	if err = sub.Subscribe(); err != nil {
+		return fmt.Errorf("error subscribe: %w", err)
+	}
+
+	s.logger.
+		WithField("channel", sub.Channel()).
+		Info("subscribed")
+
+	return err
 }
 
 // OnAllocate executes cb when an Allocate event is received from the server.

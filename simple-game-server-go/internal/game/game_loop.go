@@ -36,6 +36,7 @@ func (g *Game) processEvents() {
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(c *config.Config, allocationUUID string) {
 	g.logger = g.logger.WithField("allocation_uuid", allocationUUID)
+	g.logger.Info("allocating")
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
 		ServerName: fmt.Sprintf("simple-game-server-go - %s", allocationUUID),
@@ -72,7 +73,7 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 	}
 	g.logger.
 		WithField("server_id", c.ServerID).
-		Info("ready for players")
+		Info("allocated, ready for players")
 
 	go g.launchGame()
 }

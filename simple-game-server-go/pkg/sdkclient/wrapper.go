@@ -49,3 +49,23 @@ func (c centrifugeClientWrapper) OnMessage(_ *centrifuge.Client, e centrifuge.Me
 		}
 	}
 }
+
+// OnPublish implements centrifuge.MessageHandler.
+func (c centrifugeClientWrapper) OnPublish(_ *centrifuge.Subscription, e centrifuge.PublishEvent) {
+	evt, err := UnmarshalEventJSON(e.Data)
+	if err != nil {
+		c.errc <- err
+		return
+	}
+
+	switch evt.Type() {
+	case AllocateEventType:
+		if c.allocateFunc != nil {
+			c.allocateFunc(evt.(AllocateEvent))
+		}
+	case DeallocateEventType:
+		if c.deallocateFunc != nil {
+			c.deallocateFunc(evt.(DeallocateEvent))
+		}
+	}
+}
