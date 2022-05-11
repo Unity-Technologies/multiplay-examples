@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -13,8 +14,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
-
-const ()
 
 type (
 	// Game represents an instance of a game running on this server.
@@ -57,24 +56,33 @@ type (
 		// for example current players, map name
 		state *proto.QueryState
 
+		// backfillParams represents urls and query params used to keep alive backfill tickets.
+		backfillParams *proto.BackfillParams
+
 		// wg handles synchronising termination of all active
 		// goroutines this game manages
 		wg sync.WaitGroup
 
 		// sdkClient is a client for the Multiplay SDK.
 		sdkClient *sdkclient.SDKDaemonClient
+
+		// httpClient is an http client that is used to retrieve the token from the payload
+		// proxy as well as send backfill ticket approvals to the matchmaker
+		httpClient *http.Client
 	}
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port, queryPort uint) (*Game, error) {
+func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client) (*Game, error) {
 	g := &Game{
-		cfgFile:    configPath,
-		gameEvents: make(chan event.Event, 1),
-		logger:     logger,
-		done:       make(chan struct{}, 1),
-		port:       port,
-		queryPort:  queryPort,
+		cfgFile:                     configPath,
+		gameEvents:                  make(chan event.Event, 1),
+		logger:                      logger,
+		internalEventProcessorReady: make(chan struct{}, 1),
+		done:                        make(chan struct{}, 1),
+		port:                        port,
+		queryPort:                   queryPort,
+		httpClient:                  httpClient,
 	}
 
 	return g, nil

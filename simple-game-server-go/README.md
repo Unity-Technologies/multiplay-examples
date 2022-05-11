@@ -12,3 +12,12 @@ The capabilities of this sample are as follows:
 - Dynamic server query results
     - Data such as number of players, map name, etc. are handled appropriately
     - `sqp` and `a2s` query protocols over the configured UDP `-queryport` flag
+- Backfill allocation keep alive
+    - If `"enableBackfill"="true"` is set on the `server.json` then the server will support keeping alive a backfill ticket in the matchmaker
+    - If you are not using the production matchmaker gateway url (`https://matchmaker.services.api.unity.com`), then you can change this location by setting the `matchmakerUrl` param in `server.json`. 
+        - e.g. `"matchmakerUrl": "https://matchmaker-stg.services.api.unity.com"`
+    - Please see the [Matchmaker docs on configuring backfill](https://unity-technologies.github.io/ucg-matchmaking-docs/standard/backfill-tutorial) for more information on backfill.
+- Client simulation
+    - A game client can be simulated by opening a TCP connection once the server is allocated
+        - The server should be allocated first by invoking the [server allocations API](https://docs.unity.com/multiplay/api/endpoints/server-allocate.html)
+        - A TCP connection can be opened with a `netcat` command: `nc <ip> <port>`. Once the connection is opened, this connection represents a player - as such, the 'Concurrent Users' count will be updated in the dashboard

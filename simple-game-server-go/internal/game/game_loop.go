@@ -16,6 +16,19 @@ import (
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
 )
 
+type (
+	// tokenResponse is the representation of a token and an error from the payload proxy service.
+	tokenResponse struct {
+		Token string `json:"token"`
+		Error string `json:"error"`
+	}
+)
+
+var (
+	errTokenFetch      = errors.New("failed to retrieve JWT token")
+	errBackfillApprove = errors.New("failed to approve backfill ticket")
+)
+
 // processEvents handles processing events for the operation of the
 // game server, such as allocating and deallocating the server.
 func (g *Game) processEvents() {
@@ -43,6 +56,18 @@ func (g *Game) allocated(c *config.Config, allocationUUID string) {
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
+	}
+	bf, err := strconv.ParseBool(c.EnableBackfill)
+	if bf {
+		g.backfillParams = &proto.BackfillParams{
+			MatchmakerURL:   c.MatchmakerURL,
+			PayloadProxyURL: c.PayloadProxyURL,
+			AllocatedUUID:   c.AllocatedUUID,
+		}
+	} else if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error parsing enableBackfill field in config")
 	}
 
 	if err := g.switchQueryProtocol(*c); err != nil {
@@ -124,6 +149,8 @@ func (g *Game) launchGame() {
 	}
 
 	g.gameBind = gs
+
+	go g.keepAliveBackfill()
 
 	for {
 		client, err := g.acceptClient(g.gameBind)
