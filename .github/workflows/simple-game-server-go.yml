@@ -22,7 +22,7 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.39
+          version: v1.45
           working-directory: './simple-game-server-go'
       - name: Build
         uses: goreleaser/goreleaser-action@v2
