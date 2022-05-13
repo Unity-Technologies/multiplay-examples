@@ -19,12 +19,12 @@ const (
 	DeallocateEventType
 )
 
-// MarshalJSON implements json.Marshaler
+// MarshalJSON implements json.Marshaler.
 func (i EventType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.String())
 }
 
-// UnmarshalJSON implements json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler.
 func (i *EventType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
