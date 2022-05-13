@@ -29,6 +29,8 @@ jobs:
         with:
           version: v1.46
           working-directory: './simple-game-server-go'
+          skip-cache: true
+          args: -v
       - name: Build
         uses: goreleaser/goreleaser-action@v2
         if: startsWith(github.ref, 'refs/tags/') == false
