@@ -10,11 +10,6 @@ jobs:
     defaults:
       run:
         working-directory: './simple-game-server-go'
-    env:
-      GOPRIVATE: ""
-      GONOSUMDB: "github.com/Unity-Technologies/*"
-      GOPROXY: https://github:${{ secrets.GITHUB_TOKEN }}@athens.prd.cds.internal.unity3d.com/
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -39,8 +34,18 @@ jobs:
           version: latest
           args: build --rm-dist --snapshot
           workdir: './simple-game-server-go'
+        env:
+          GOPRIVATE: ""
+          GONOSUMDB: "github.com/Unity-Technologies/*"
+          GOPROXY: https://github:${{ secrets.GITHUB_TOKEN }}@athens.prd.cds.internal.unity3d.com/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Test
         run: 'go test -timeout=5m -race -v ./...'
+        env:
+          GOPRIVATE: ""
+          GONOSUMDB: "github.com/Unity-Technologies/*"
+          GOPROXY: https://github:${{ secrets.GITHUB_TOKEN }}@athens.prd.cds.internal.unity3d.com/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Release
         uses: goreleaser/goreleaser-action@v2
         if: ${{ startsWith(github.ref, 'refs/tags/') && endsWith(github.ref, '-simple-game-server-go') }}
@@ -49,3 +54,8 @@ jobs:
           version: latest
           args: release --rm-dist
           workdir: './simple-game-server-go'
+        env:
+          GOPRIVATE: ""
+          GONOSUMDB: "github.com/Unity-Technologies/*"
+          GOPROXY: https://github:${{ secrets.GITHUB_TOKEN }}@athens.prd.cds.internal.unity3d.com/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
