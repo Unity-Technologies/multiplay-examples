@@ -83,7 +83,7 @@ func (s *SDKDaemonClient) OnDeallocate(cb DeallocateCallback) {
 	s.client.deallocateFunc = cb
 }
 
-// ReadyForPlayers mark server as ready for players
+// ReadyForPlayers mark server as ready for players.
 func (s *SDKDaemonClient) ReadyForPlayers(serverID int64, allocationID string) error {
 	url := fmt.Sprintf("http://%s"+ReadyForPlayersPath, s.url, serverID, allocationID)
 

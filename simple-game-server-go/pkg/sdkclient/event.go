@@ -99,12 +99,12 @@ func NewDeallocateEvent(serverID int64, allocationID string) *DeallocateEvent {
 	}
 }
 
-// MarshalJSON implements json.Marshaler
+// MarshalJSON implements json.Marshaler.
 func (a *AllocateEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(*a)
 }
 
-// MarshalJSON implements json.Marshaler
+// MarshalJSON implements json.Marshaler.
 func (d *DeallocateEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(*d)
 }

@@ -29,4 +29,6 @@ linters:
     - godox
     - forcetypeassert
     - nlreturn
-
+    - tagliatelle
+    - varnamelen
+    - ireturn
