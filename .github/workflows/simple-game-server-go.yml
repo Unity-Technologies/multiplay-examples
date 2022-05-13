@@ -28,6 +28,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.39.0
+          working-directory: simple-game-server-go
       - name: Build
         uses: goreleaser/goreleaser-action@v2
         if: startsWith(github.ref, 'refs/tags/') == false
