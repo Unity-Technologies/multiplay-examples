@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
@@ -36,7 +36,7 @@ func (g *Game) processEvents() {
 	defer g.wg.Done()
 
 	for ev := range g.gameEvents {
-		switch ev.Type {
+		switch ev.EventType {
 		case event.Allocated:
 			g.allocated(ev.Config, ev.AllocationUUID)
 

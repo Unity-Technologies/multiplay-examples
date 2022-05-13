@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 )
 
@@ -24,8 +24,8 @@ func (g *Game) allocateHandler(evt sdkclient.AllocateEvent) {
 		return
 	}
 
-	g.gameEvents <- event.Event{
-		Type:           event.Allocated,
+	g.gameEvents <- event.LifecycleEvent{
+		EventType:      event.Allocated,
 		AllocationUUID: evt.AllocationID,
 		Config:         c,
 	}
@@ -46,8 +46,8 @@ func (g *Game) deallocateHandler(evt sdkclient.DeallocateEvent) {
 		return
 	}
 
-	g.gameEvents <- event.Event{
-		Type:           event.Deallocated,
+	g.gameEvents <- event.LifecycleEvent{
+		EventType:      event.Deallocated,
 		AllocationUUID: evt.AllocationID,
 		Config:         c,
 	}
