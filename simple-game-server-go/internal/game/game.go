@@ -102,7 +102,7 @@ func (g *Game) Start() error {
 
 	u, err := url.Parse(c.PayloadProxyURL)
 	if err != nil {
-		return fmt.Errorf("parsing PayloadProxyURL url, err: %s", err.Error())
+		return fmt.Errorf("parsing PayloadProxyURL url, err: %w", err)
 	}
 
 	g.sdkClient = sdkclient.NewSDKDaemonClient(u.Host, g.logger)
@@ -123,7 +123,7 @@ func (g *Game) Start() error {
 	}
 
 	if err = g.sdkConnect(); err != nil {
-		return fmt.Errorf("game start, failed connect to sdkDaemon" + err.Error())
+		return fmt.Errorf("game start, failed connect to sdkDaemon: %w", err)
 	}
 
 	g.logger.

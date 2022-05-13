@@ -4,10 +4,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
-
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 )
 
 // allocateHandler is an allocation event handler for the Multiplay SDK.

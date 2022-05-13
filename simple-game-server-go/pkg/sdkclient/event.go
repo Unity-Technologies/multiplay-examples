@@ -31,13 +31,13 @@ func (i *EventType) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	switch strings.ToLower(s) {
+	switch et := strings.ToLower(s); et {
 	case "allocateeventtype":
 		*i = AllocateEventType
 	case "deallocateeventtype":
 		*i = DeallocateEventType
 	default:
-		return fmt.Errorf("unknown event type: %q", s)
+		return InvalidEventTypeError(et)
 	}
 
 	return nil

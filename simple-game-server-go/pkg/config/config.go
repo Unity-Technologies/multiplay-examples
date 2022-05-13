@@ -89,7 +89,7 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 	}
 
 	if cfg.PayloadProxyURL == "" {
-		cfg.PayloadProxyURL = sdkclient.SDK_DAEMON_URL
+		cfg.PayloadProxyURL = sdkclient.SDKDaemonURL
 	}
 
 	if cfg.EnableBackfill == "" {

@@ -13,8 +13,7 @@ import (
 const (
 	RequestTimeout      = 2 * time.Second
 	ReadyForPlayersPath = "/v1/server/%d/allocation/%s/ready-for-players"
-	// SDK_DAEMON_URL represent sdk daemon default url
-	SDK_DAEMON_URL = "http://localhost:8086"
+	SDKDaemonURL        = "http://localhost:8086"
 )
 
 // SDKDaemonClient provides a client for the SDK daemon.
@@ -85,33 +84,35 @@ func (s *SDKDaemonClient) OnDeallocate(cb DeallocateCallback) {
 }
 
 // ReadyForPlayers mark server as ready for players
-func (s *SDKDaemonClient) ReadyForPlayers(serverID int64, allocationId string) error {
-	url := fmt.Sprintf("http://%s"+ReadyForPlayersPath, s.url, serverID, allocationId)
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+func (s *SDKDaemonClient) ReadyForPlayers(serverID int64, allocationID string) error {
+	url := fmt.Sprintf("http://%s"+ReadyForPlayersPath, s.url, serverID, allocationID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), RequestTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 	if err != nil {
-		return fmt.Errorf("ready for players request: %s", err.Error())
+		return fmt.Errorf("ready for players request: %w", err)
 	}
 
 	statusCode, err := s.requestWithStatusCodeReturn(req)
 	if err != nil {
-		return fmt.Errorf("sdk request to daemon: %s", err.Error())
+		return fmt.Errorf("sdk request to daemon: %w", err)
 	}
 
 	if statusCode != http.StatusOK {
-		return fmt.Errorf("sdk request to daemon, unexpected status returned: %d", statusCode)
+		return UnexpectedHTTPStatusError(statusCode)
 	}
 
 	return nil
 }
 
 func (s *SDKDaemonClient) requestWithStatusCodeReturn(req *http.Request) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), RequestTimeout)
-	defer cancel()
-
-	res, err := http.DefaultClient.Do(req.WithContext(ctx))
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return 0, err
 	}
+	defer res.Body.Close()
 
 	return res.StatusCode, nil
 }

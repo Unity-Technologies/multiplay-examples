@@ -26,4 +26,10 @@ linters:
     - tparallel
     - wrapcheck
     - wsl
+    - godot
+    - varnamelen
+    - tagliatelle
+    - forcetypeassert
+    - ireturn
+    - nlreturn
 
