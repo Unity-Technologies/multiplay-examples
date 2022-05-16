@@ -118,7 +118,7 @@ func (c *centrifugeClientWrapper) Close() error {
 }
 
 // newSubscription wraps the underlying Centrifuge client methods to create a
-// new subscription
+// new subscription.
 func (c *centrifugeClientWrapper) newSubscription(channel string) error {
 	var err error
 	c.sub, err = c.Client.NewSubscription(channel)
