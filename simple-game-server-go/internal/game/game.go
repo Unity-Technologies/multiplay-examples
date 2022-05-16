@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -112,8 +113,13 @@ func (g *Game) Start() error {
 	g.sdkClient.OnAllocate(g.allocateHandler)
 	g.sdkClient.OnDeallocate(g.deallocateHandler)
 
+	svrID, err := strconv.ParseInt(c.ServerID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("parse server ID: %w", err)
+	}
+
 	// we need to subscribe before connect
-	if err = g.sdkClient.Subscribe(c.ServerID); err != nil {
+	if err = g.sdkClient.Subscribe(svrID); err != nil {
 		return err
 	}
 

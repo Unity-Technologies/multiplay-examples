@@ -48,9 +48,9 @@ func (s *SDKDaemonClient) Connect() error {
 	return s.client.Connect()
 }
 
-// Subscribe creates subscription channel identified by server ID and subscribe to it.
-func (s *SDKDaemonClient) Subscribe(channel string) error {
-	sub, err := s.client.NewSubscription(channel)
+// Subscribe creates a subscription for the given server ID.
+func (s *SDKDaemonClient) Subscribe(serverID int64) error {
+	sub, err := s.client.NewSubscription(serverCentrifugeChannel(serverID))
 	if err != nil {
 		return fmt.Errorf("new subscription: %w", err)
 	}
@@ -70,7 +70,7 @@ func (s *SDKDaemonClient) Subscribe(channel string) error {
 		WithField("channel", sub.Channel()).
 		Info("subscribed")
 
-	return err
+	return nil
 }
 
 // OnAllocate executes cb when an Allocate event is received from the server.
@@ -127,4 +127,14 @@ func (s *SDKDaemonClient) Errors() <-chan error {
 // Close shuts down the underlying Centrifuge connection.
 func (s *SDKDaemonClient) Close() error {
 	return s.client.Close()
+}
+
+// serverCentrifugeChannel returns a Centrifuge channel name for the given server ID.
+//
+// We're using a Centrifuge user channel boundary here to ensure that only users
+// identifying themselves as the given server can subscribe to this channel.
+//
+// See: https://centrifugal.dev/docs/server/channels#user-channel-boundary-
+func serverCentrifugeChannel(serverID int64) string {
+	return fmt.Sprintf("server#%d", serverID)
 }
