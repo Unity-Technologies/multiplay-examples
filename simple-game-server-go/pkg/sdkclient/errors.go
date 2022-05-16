@@ -26,7 +26,7 @@ func (e UnexpectedHTTPStatusError) Error() string {
 	return fmt.Sprintf("request to the SDK daemon returned an unexpected status code: %d", int(e))
 }
 
-// SubscribeError is returned when the SDK client was unable to susbcribe to
+// SubscribeError is returned when the SDK client was unable to subscribe to
 // a channel.
 type SubscribeError string
 
