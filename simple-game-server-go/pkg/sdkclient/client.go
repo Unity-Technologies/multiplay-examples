@@ -22,7 +22,6 @@ const (
 type SDKDaemonClient struct {
 	client *centrifugeClientWrapper
 	url    string
-	logger *logrus.Entry
 }
 
 // NewSDKDaemonClient returns an SDK Daemon client configured to connect to the
@@ -34,9 +33,10 @@ func NewSDKDaemonClient(url string, l *logrus.Entry) *SDKDaemonClient {
 		client: &centrifugeClientWrapper{
 			Client: centrifuge.NewJsonClient(wsURL, centrifuge.DefaultConfig()),
 			errc:   make(chan error),
+			done:   make(chan struct{}),
+			logger: l,
 		},
-		url:    url,
-		logger: l,
+		url: url,
 	}
 
 	return sc
@@ -50,25 +50,13 @@ func (s *SDKDaemonClient) Connect() error {
 
 // Subscribe creates a subscription for the given server ID.
 func (s *SDKDaemonClient) Subscribe(serverID int64) error {
-	sub, err := s.client.NewSubscription(serverCentrifugeChannel(serverID))
-	if err != nil {
-		return fmt.Errorf("new subscription: %w", err)
+	channel := serverCentrifugeChannel(serverID)
+	if err := s.client.newSubscription(channel); err != nil {
+		return err
 	}
-
-	s.logger.
-		WithField("channel", sub.Channel()).
-		WithField("NewSubscription", sub).
-		Info("subscription created")
-
-	sub.OnPublish(s.client)
-
-	if err = sub.Subscribe(); err != nil {
-		return fmt.Errorf("error subscribe: %w", err)
+	if err := s.client.subscribe(); err != nil {
+		return err
 	}
-
-	s.logger.
-		WithField("channel", sub.Channel()).
-		Info("subscribed")
 
 	return nil
 }

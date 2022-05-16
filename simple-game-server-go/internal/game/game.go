@@ -13,7 +13,6 @@ import (
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
-	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
 
@@ -123,8 +122,8 @@ func (g *Game) Start() error {
 		return err
 	}
 
-	if err = g.sdkConnect(); err != nil {
-		return fmt.Errorf("game start, failed connect to sdkDaemon: %w", err)
+	if err = g.sdkClient.Connect(); err != nil {
+		return fmt.Errorf("game start, failed connect to SDK daemon: %w", err)
 	}
 
 	g.logger.
@@ -151,28 +150,6 @@ func (g *Game) Stop() error {
 	g.logger.Info("stopped")
 
 	return g.sdkClient.Close()
-}
-
-// sdkConnect attempts to connect to the SDK Daemon.
-//
-// The connection is retried as this process may not be immediately registered
-// with the SDK daemon.
-func (g *Game) sdkConnect() (cerr error) {
-	for {
-		select {
-		case <-g.done:
-			return cerr
-		default:
-			if err := g.sdkClient.Connect(); err != nil {
-				cerr = multierror.Append(cerr, err)
-				time.Sleep(2 * time.Second)
-
-				continue
-			}
-
-			return nil
-		}
-	}
 }
 
 // sdkErrorHandler logs errors returned as a result of communicating with the
