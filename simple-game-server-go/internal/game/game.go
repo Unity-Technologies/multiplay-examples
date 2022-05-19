@@ -1,14 +1,18 @@
 package game
 
 import (
+	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,14 +28,10 @@ type (
 		clients sync.Map
 
 		// gameEvents is a channel of game events, for example allocated / deallocated
-		gameEvents chan event.Event
+		gameEvents chan event.LifecycleEvent
 
 		// gameBind is a TCP listener representing a fake game server
 		gameBind *net.TCPListener
-
-		// internalEventProcessorReady is a channel that, when written to,
-		// indicates that the internal event processor is ready.
-		internalEventProcessorReady chan struct{}
 
 		// done is a channel that when closed indicates the server is going
 		// away.
@@ -64,6 +64,9 @@ type (
 		// goroutines this game manages
 		wg sync.WaitGroup
 
+		// sdkClient is a client for the Multiplay SDK.
+		sdkClient *sdkclient.SDKDaemonClient
+
 		// httpClient is an http client that is used to retrieve the token from the payload
 		// proxy as well as send backfill ticket approvals to the matchmaker
 		httpClient *http.Client
@@ -73,14 +76,13 @@ type (
 // New creates a new game, configured with the provided configuration file.
 func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client) (*Game, error) {
 	g := &Game{
-		cfgFile:                     configPath,
-		gameEvents:                  make(chan event.Event, 1),
-		logger:                      logger,
-		internalEventProcessorReady: make(chan struct{}, 1),
-		done:                        make(chan struct{}, 1),
-		port:                        port,
-		queryPort:                   queryPort,
-		httpClient:                  httpClient,
+		cfgFile:    configPath,
+		gameEvents: make(chan event.LifecycleEvent, 1),
+		logger:     logger,
+		done:       make(chan struct{}, 1),
+		port:       port,
+		queryPort:  queryPort,
+		httpClient: httpClient,
 	}
 
 	return g, nil
@@ -93,29 +95,42 @@ func (g *Game) Start() error {
 		return err
 	}
 
+	u, err := url.Parse(c.PayloadProxyURL)
+	if err != nil {
+		return fmt.Errorf("parsing PayloadProxyURL url, err: %w", err)
+	}
+
+	g.sdkClient = sdkclient.NewSDKDaemonClient(u.Host, g.logger)
+
 	if err = g.switchQueryProtocol(*c); err != nil {
 		return err
 	}
 
+	go g.sdkErrorHandler()
 	go g.processEvents()
-	go g.processInternalEvents()
 
-	// Wait until the internal event processor is ready.
-	<-g.internalEventProcessorReady
+	g.sdkClient.OnAllocate(g.allocateHandler)
+	g.sdkClient.OnDeallocate(g.deallocateHandler)
+
+	svrID, err := strconv.ParseInt(c.ServerID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("parse server ID: %w", err)
+	}
+
+	// we need to subscribe before connect
+	if err = g.sdkClient.Subscribe(svrID); err != nil {
+		return err
+	}
+
+	if err = g.sdkClient.Connect(); err != nil {
+		return fmt.Errorf("game start, failed connect to SDK daemon: %w", err)
+	}
 
 	g.logger.
 		WithField("port", g.port).
 		WithField("queryport", g.queryPort).
 		WithField("proto", c.QueryType).
 		Info("server started")
-
-	// Handle the app starting with an allocation
-	if c.AllocatedUUID != "" {
-		g.gameEvents <- event.Event{
-			Type:   event.Allocated,
-			Config: c,
-		}
-	}
 
 	return nil
 }
@@ -128,12 +143,21 @@ func (g *Game) Stop() error {
 		g.queryBind.Close()
 	}
 
-	g.gameEvents <- event.Event{Type: event.Deallocated}
+	g.gameEvents <- event.LifecycleEvent{EventType: event.Deallocated}
 	close(g.done)
+	close(g.gameEvents)
 	g.wg.Wait()
 	g.logger.Info("stopped")
 
-	return nil
+	return g.sdkClient.Close()
+}
+
+// sdkErrorHandler logs errors returned as a result of communicating with the
+// Multiplay SDK daemon.
+func (g *Game) sdkErrorHandler() {
+	for err := range g.sdkClient.Errors() {
+		g.logger.WithError(err).Error("error from SDK daemon")
+	}
 }
 
 // handleQuery handles responding to query commands on an incoming UDP port.

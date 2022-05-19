@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
@@ -36,9 +36,9 @@ func (g *Game) processEvents() {
 	defer g.wg.Done()
 
 	for ev := range g.gameEvents {
-		switch ev.Type {
+		switch ev.EventType {
 		case event.Allocated:
-			g.allocated(ev.Config)
+			g.allocated(ev.Config, ev.AllocationUUID)
 
 		case event.Deallocated:
 			g.deallocated(ev.Config)
@@ -47,11 +47,12 @@ func (g *Game) processEvents() {
 }
 
 // allocated starts a game after the server has been allocated.
-func (g *Game) allocated(c *config.Config) {
-	g.logger = g.logger.WithField("allocation_uuid", c.AllocatedUUID)
+func (g *Game) allocated(c *config.Config, allocationUUID string) {
+	g.logger = g.logger.WithField("allocation_uuid", allocationUUID)
+	g.logger.Info("allocating")
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
-		ServerName: fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID),
+		ServerName: fmt.Sprintf("simple-game-server-go - %s", allocationUUID),
 		GameType:   c.GameType,
 		Map:        c.Map,
 		Port:       uint16(g.port),
@@ -76,6 +77,28 @@ func (g *Game) allocated(c *config.Config) {
 
 		return
 	}
+
+	serverID, err := strconv.ParseInt(c.ServerID, 10, 64)
+	if err != nil {
+		g.logger.
+			WithField("server_id", c.ServerID).
+			WithField("error", err.Error()).
+			Error("error parsing serverID to int64")
+
+		return
+	}
+
+	err = g.sdkClient.ReadyForPlayers(serverID, allocationUUID)
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error registering server as ready for players")
+
+		return
+	}
+	g.logger.
+		WithField("server_id", c.ServerID).
+		Info("allocated, ready for players")
 
 	go g.launchGame()
 }

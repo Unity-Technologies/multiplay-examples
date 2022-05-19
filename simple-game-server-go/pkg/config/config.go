@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/sdkclient"
 )
 
 // Config represents the game server configuration.
@@ -28,6 +30,9 @@ type Config struct {
 
 	// QueryType determines the protocol used for query responses.
 	QueryType string `json:"queryType"`
+
+	// ServerID is the Multiplay game server ID.
+	ServerID string `json:"serverID"`
 
 	// MatchmakerURL is the public domain name used for approving backfill tickets.
 	MatchmakerURL string `json:"matchmakerUrl"`
@@ -84,7 +89,7 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 	}
 
 	if cfg.PayloadProxyURL == "" {
-		cfg.PayloadProxyURL = "http://localhost:8086"
+		cfg.PayloadProxyURL = sdkclient.SDKDaemonURL
 	}
 
 	if cfg.EnableBackfill == "" {
