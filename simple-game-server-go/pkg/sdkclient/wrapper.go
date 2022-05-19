@@ -2,7 +2,6 @@ package sdkclient
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/centrifugal/centrifuge-go"
@@ -36,27 +35,6 @@ type (
 		deallocateFunc DeallocateCallback
 	}
 )
-
-// OnMessage implements centrifuge.MessageHandler.
-func (c *centrifugeClientWrapper) OnMessage(_ *centrifuge.Client, e centrifuge.MessageEvent) {
-	evt, err := UnmarshalEventJSON(e.Data)
-	if err != nil {
-		c.errc <- err
-		return
-	}
-
-	log.Println("OnMessage: ", evt)
-	switch evt.Type() {
-	case AllocateEventType:
-		if c.allocateFunc != nil {
-			c.allocateFunc(evt.(AllocateEvent))
-		}
-	case DeallocateEventType:
-		if c.deallocateFunc != nil {
-			c.deallocateFunc(evt.(DeallocateEvent))
-		}
-	}
-}
 
 // OnPublish implements centrifuge.MessageHandler.
 func (c *centrifugeClientWrapper) OnPublish(_ *centrifuge.Subscription, e centrifuge.PublishEvent) {
