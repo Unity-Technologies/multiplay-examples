@@ -3,6 +3,7 @@ package game
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"strconv"
 	"sync/atomic"
@@ -14,6 +15,7 @@ import (
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/a2s"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto/sqp"
+	"github.com/google/uuid"
 )
 
 type (
@@ -49,6 +51,8 @@ func (g *Game) processEvents() {
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(c *config.Config) {
 	g.logger = g.logger.WithField("allocation_uuid", c.AllocatedUUID)
+	g.logger.Infof("This is the config we got: %s", c)
+
 	g.state = &proto.QueryState{
 		MaxPlayers: int32(c.MaxPlayers),
 		ServerName: fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID),
@@ -56,17 +60,31 @@ func (g *Game) allocated(c *config.Config) {
 		Map:        c.Map,
 		Port:       uint16(g.port),
 	}
-	bf, err := strconv.ParseBool(c.EnableBackfill)
-	if bf {
+	mm, err := strconv.ParseBool(c.EnableMatchmaking)
+	if err != nil {
+		g.logger.
+			WithField("error", err.Error()).
+			Error("error parsing enableMatchmaker field in config")
+	}
+
+	g.mmProperties.MatchmakerEnabled = mm
+
+	if g.mmProperties.MatchmakerEnabled {
+		g.logger.Infof("Matchmaker is enabled, going to get backfill params")
 		g.backfillParams = &proto.BackfillParams{
 			MatchmakerURL:   c.MatchmakerURL,
 			PayloadProxyURL: c.PayloadProxyURL,
 			AllocatedUUID:   c.AllocatedUUID,
 		}
-	} else if err != nil {
-		g.logger.
-			WithField("error", err.Error()).
-			Error("error parsing enableBackfill field in config")
+
+		bf, err := strconv.ParseBool(c.EnableBackfill)
+		if bf {
+			g.mmProperties.BackfillEnabled = bf
+		} else if err != nil {
+			g.logger.
+				WithField("error", err.Error()).
+				Error("error parsing enableBackfill field in config")
+		}
 	}
 
 	if err := g.switchQueryProtocol(*c); err != nil {
@@ -127,14 +145,84 @@ func (g *Game) launchGame() {
 
 	g.gameBind = gs
 
-	go g.keepAliveBackfill()
+	g.logger.Infof("game is: %s", g)
+	g.logger.Infof("game is: %+v", g)
+	if g.mmProperties.MatchmakerEnabled {
+		g.logger.Infof("Matchmaker enabled")
+		g.prepareMatchmaking()
+	}
 
+	ticker := time.NewTicker(1 * time.Second)
+	timeSoFar := 0
+
+	g.logger.Infof("Starting loop")
 	for {
+		if !g.mmProperties.MatchmakerEnabled {
+			continue
+		}
+
+		g.logger.Infof("Going to check timer now")
+		// Check matchmaker
+		if g.mmProperties.BackfillEnabled {
+			if g.state.CurrentPlayers < g.state.MaxPlayers {
+				if g.backfillParams.BackfillTicketID == "" {
+					g.createBackfill(g.mmAllocationPayload.MatchProperties)
+				}
+			} else {
+				if g.backfillParams.BackfillTicketID != "" {
+					//	TODO: Delete the backfill ticket
+				}
+			}
+		}
+		select {
+		case <-ticker.C:
+			timeSoFar += 1
+			g.logger.Infof("Current time: %s", timeSoFar)
+
+			if g.mmProperties.BackfillEnabled {
+				if g.backfillParams.BackfillTicketID != "" {
+					resp, err := g.approveBackfillTicket()
+					if err != nil {
+						g.logger.
+							WithField("error", err.Error()).
+							Error("encountered an error while in approve backfill loop.")
+					} else {
+						_ = resp.Body.Close()
+						body, err := ioutil.ReadAll(resp.Body)
+						g.logger.Infof("Approved backfill Ticket: %s\nError: %s", body, err.Error())
+					}
+				}
+				if timeSoFar > 30 {
+					ticker.Stop()
+					g.Stop()
+					return
+				}
+			} else {
+				if timeSoFar > 3 {
+					g.logger.Infof("Stopping server now because timer passed")
+					ticker.Stop()
+					g.Stop()
+					return
+				}
+			}
+
+		case <-g.done:
+			ticker.Stop()
+			g.Stop()
+			return
+		}
+
+		go g.clientThread()
+	}
+}
+
+func (g *Game) clientThread() {
+	for {
+		// Check player connection
 		client, err := g.acceptClient(g.gameBind)
 		if err != nil {
 			if errors.Is(err, syscall.EINVAL) {
 				g.logger.Debug("server closed")
-
 				return
 			}
 
@@ -158,6 +246,9 @@ func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 
 	g.clients.Store(client.RemoteAddr(), client)
 	currentPlayers := atomic.AddInt32(&g.state.CurrentPlayers, 1)
+	// TODO: We should have a map of clientID to player ID and add the player that connected
+	// TODO: The client needs to send their ID when they connect, then we need to check that the DGS is expecting this player to join
+	g.mmAllocationPayload.MatchProperties.Players = append(g.mmAllocationPayload.MatchProperties.Players, Player{Id: uuid.New().String()})
 	g.logger.Infof("connected: %s, players: %d", client.RemoteAddr(), currentPlayers)
 
 	return client, nil
@@ -168,6 +259,8 @@ func (g *Game) handleClient(client *net.TCPConn) {
 	defer func() {
 		g.clients.Delete(client.RemoteAddr())
 		currentPlayers := atomic.AddInt32(&g.state.CurrentPlayers, -1)
+		// TODO: We should have a map of clientID to player ID and remove the player that disconnected
+		g.mmAllocationPayload.MatchProperties.Players = g.mmAllocationPayload.MatchProperties.Players[:len(g.mmAllocationPayload.MatchProperties.Players)-1]
 		g.logger.Infof("disconnected: %s, players: %d", client.RemoteAddr(), currentPlayers)
 	}()
 	for {

@@ -31,9 +31,10 @@ type (
 
 	// BackfillParams represents urls and query params used to keep alive backfill tickets.
 	BackfillParams struct {
-		MatchmakerURL   string
-		PayloadProxyURL string
-		AllocatedUUID   string
+		MatchmakerURL    string
+		PayloadProxyURL  string
+		AllocatedUUID    string
+		BackfillTicketID string
 	}
 )
 

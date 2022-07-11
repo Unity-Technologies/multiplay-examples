@@ -75,9 +75,10 @@ func Test_approveBackfillTicket(t *testing.T) {
 	require.NoError(t, err)
 
 	g.backfillParams = &proto.BackfillParams{
-		MatchmakerURL:   c.MatchmakerURL,
-		PayloadProxyURL: c.PayloadProxyURL,
-		AllocatedUUID:   c.AllocatedUUID,
+		MatchmakerURL:    c.MatchmakerURL,
+		PayloadProxyURL:  c.PayloadProxyURL,
+		AllocatedUUID:    c.AllocatedUUID,
+		BackfillTicketID: c.AllocatedUUID,
 	}
 
 	resp, err := g.approveBackfillTicket()

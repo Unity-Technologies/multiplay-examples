@@ -3,7 +3,9 @@ package game
 import (
 	"net"
 	"net/http"
+	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
@@ -67,6 +69,12 @@ type (
 		// httpClient is an http client that is used to retrieve the token from the payload
 		// proxy as well as send backfill ticket approvals to the matchmaker
 		httpClient *http.Client
+
+		mmProperties MMProperties
+
+		mmConfig Config
+
+		mmAllocationPayload AllocationPayload
 	}
 )
 
@@ -133,7 +141,12 @@ func (g *Game) Stop() error {
 	g.wg.Wait()
 	g.logger.Info("stopped")
 
+	os.Exit(0)
 	return nil
+}
+
+func (g *Game) AddPlayers(numberOfPlayers int32) {
+	atomic.AddInt32(&g.state.CurrentPlayers, numberOfPlayers)
 }
 
 // handleQuery handles responding to query commands on an incoming UDP port.

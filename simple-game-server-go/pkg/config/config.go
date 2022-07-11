@@ -37,6 +37,8 @@ type Config struct {
 
 	// EnableBackfill enables backfill during the game loop.
 	EnableBackfill string `json:"enableBackfill"`
+
+	EnableMatchmaking string `json:"enableMatchmaker"`
 }
 
 // NewConfigFromFile loads configuration from the specified file
@@ -89,6 +91,10 @@ func NewConfigFromFile(configFile string) (*Config, error) {
 
 	if cfg.EnableBackfill == "" {
 		cfg.EnableBackfill = "false"
+	}
+
+	if cfg.EnableMatchmaking == "" {
+		cfg.EnableMatchmaking = "false"
 	}
 
 	return cfg, nil
