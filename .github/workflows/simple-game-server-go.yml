@@ -18,11 +18,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.19
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.39.0
+          version: v1.48.0
           working-directory: './simple-game-server-go'
       - name: Build
         uses: goreleaser/goreleaser-action@v2
