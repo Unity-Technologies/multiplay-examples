@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
@@ -148,7 +147,7 @@ func handleQuery(q proto.QueryResponder, logger *logrus.Entry, wg *sync.WaitGrou
 
 	for {
 		buf := make([]byte, size)
-		_, to, err := b.conn.ReadFromUDP(buf)
+		_, to, err := b.Read(buf)
 		if err != nil {
 			if b.IsDone() {
 				return
@@ -170,18 +169,16 @@ func handleQuery(q proto.QueryResponder, logger *logrus.Entry, wg *sync.WaitGrou
 			continue
 		}
 
-		if err = b.conn.SetWriteDeadline(time.Now().Add(1 * time.Second)); err != nil {
-			logger.
-				WithField("error", err.Error()).
-				Error("error setting write deadline")
+		if _, err = b.Write(resp, to); err != nil {
+			if b.IsDone() {
+				return
+			}
 
-			continue
-		}
-
-		if _, err = b.conn.WriteTo(resp, to); err != nil {
 			logger.
 				WithField("error", err.Error()).
 				Error("error writing response")
+
+			continue
 		}
 	}
 }
