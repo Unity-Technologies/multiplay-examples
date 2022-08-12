@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"testing"
 	"time"
@@ -61,7 +61,7 @@ func Test_approveBackfillTicket(t *testing.T) {
 	}))
 	defer mmBackfillServer.Close()
 
-	require.NoError(t, ioutil.WriteFile(p, []byte(fmt.Sprintf(`{
+	require.NoError(t, os.WriteFile(p, []byte(fmt.Sprintf(`{
 			"allocatedUUID": "77c31f84-b890-48e8-be08-5db9a551bba3",
 			"matchmakerUrl": "%s",
 			"payloadProxyUrl": "%s"

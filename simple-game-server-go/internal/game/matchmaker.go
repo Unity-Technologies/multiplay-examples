@@ -62,7 +62,7 @@ func (g *Game) approveBackfillTicket() (*http.Response, error) {
 func (g *Game) getJwtToken() (string, error) {
 	payloadProxyTokenURL := fmt.Sprintf("%s/token", g.backfillParams.PayloadProxyURL)
 
-	req, err := http.NewRequestWithContext(context.Background(), "GET", payloadProxyTokenURL, http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, payloadProxyTokenURL, http.NoBody)
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +105,7 @@ func (g *Game) updateBackfillAllocation(token string) (*http.Response, error) {
 		g.backfillParams.MatchmakerURL,
 		g.backfillParams.AllocatedUUID)
 
-	req, err := http.NewRequestWithContext(context.Background(), "POST", backfillApprovalURL, http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, backfillApprovalURL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

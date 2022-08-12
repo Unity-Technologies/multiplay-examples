@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"reflect"
 	"testing"
@@ -80,7 +80,7 @@ func Test_NewConfigFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := path.Join(t.TempDir(), "config.json")
-			require.NoError(t, ioutil.WriteFile(f, []byte(tt.fields.configContent), 0o600))
+			require.NoError(t, os.WriteFile(f, []byte(tt.fields.configContent), 0o600))
 
 			got, err := NewConfigFromFile(f)
 			if (err != nil) != tt.wantErr {

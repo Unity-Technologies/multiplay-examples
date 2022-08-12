@@ -13,6 +13,7 @@ type (
 )
 
 var (
+	ErrChallengeMalformed  = errors.New("challenge malformed")
 	ErrChallengeMismatch   = errors.New("challenge mismatch")
 	ErrInvalidPacketLength = errors.New("invalid packet length")
 	ErrNoChallenge         = errors.New("no challenge")

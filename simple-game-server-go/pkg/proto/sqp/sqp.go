@@ -108,7 +108,12 @@ func (q *QueryResponder) handleQuery(clientAddress string, buf []byte) ([]byte, 
 	}
 
 	// Challenge doesn't match, return with no response
-	if binary.BigEndian.Uint32(buf[1:5]) != expectedChallenge.(uint32) {
+	expectedChallengeInt, ok := expectedChallenge.(uint32)
+	if !ok {
+		return nil, ErrChallengeMalformed
+	}
+
+	if binary.BigEndian.Uint32(buf[1:5]) != expectedChallengeInt {
 		return nil, ErrChallengeMismatch
 	}
 
@@ -120,7 +125,7 @@ func (q *QueryResponder) handleQuery(clientAddress string, buf []byte) ([]byte, 
 	wantsServerInfo := requestedChunks&0x1 == 1
 	f := queryWireFormat{
 		Header:     1,
-		Challenge:  expectedChallenge.(uint32),
+		Challenge:  expectedChallengeInt,
 		SQPVersion: 1,
 	}
 
