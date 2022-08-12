@@ -1,8 +1,8 @@
 package game
 
 import (
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ func Test_watchConfig(t *testing.T) {
 	l := logrus.NewEntry(logrus.New())
 	p := path.Join(t.TempDir(), "config.json")
 
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{}`), 0o600))
+	require.NoError(t, os.WriteFile(p, []byte(`{}`), 0o600))
 
 	g, err := New(l, p, 9000, 9001, &http.Client{Timeout: 1 * time.Second})
 	require.NoError(t, err)
@@ -26,7 +26,7 @@ func Test_watchConfig(t *testing.T) {
 	<-g.internalEventProcessorReady
 
 	// Allocate
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{
+	require.NoError(t, os.WriteFile(p, []byte(`{
 		"allocatedUUID": "alloc-uuid",
 		"maxPlayers": "12"
 	}`), 0o600))
@@ -37,7 +37,7 @@ func Test_watchConfig(t *testing.T) {
 	require.Equal(t, "sqp", ev.Config.QueryType)
 
 	// Deallocate
-	require.NoError(t, ioutil.WriteFile(p, []byte(`{
+	require.NoError(t, os.WriteFile(p, []byte(`{
 		"allocatedUUID": ""
 	}`), 0o600))
 	ev = <-g.gameEvents

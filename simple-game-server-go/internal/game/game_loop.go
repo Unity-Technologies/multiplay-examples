@@ -221,6 +221,7 @@ func (g *Game) switchQueryProtocol(c config.Config) error {
 func (g *Game) restartQueryEndpoint(c config.Config) error {
 	if g.queryBind != nil {
 		g.queryBind.Close()
+		g.queryBind = nil
 	}
 
 	var err error

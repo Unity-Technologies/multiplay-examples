@@ -24,7 +24,7 @@ func Test_BindLifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := make([]byte, len(expected))
-	_, _, err = b.conn.ReadFromUDP(actual)
+	_, _, err = b.Read(actual)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 
