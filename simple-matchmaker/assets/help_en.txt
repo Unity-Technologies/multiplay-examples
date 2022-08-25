@@ -1,0 +1,21 @@
+
+Unity Simple Matchmaker Example
+
+To use multiplay, most games need a matchmaker which groups players.
+For the most streamlined experience we recommend that you use the unity matchmaker to do this, but you may use an
+alternative or your own custom implementation.
+
+This sample provides an incredibly simple matchmaker to get you started locally. It will group incoming players
+together and when enough have joined it will request a match from either its multiplay mock, or the real multiplay API.
+
+Authentication is provided through environmental variables. You may set this in your system environmental variables
+or may temporarily set this for your terminal session as shown below.
+
+Windows Example:
+set MP_ACCESS_KEY=9ff2af788834439b83ae6692f34ea5e5
+set MP_SECRET_KEY=6323354e200a451dba319bc1b98ade59
+
+For example on UNIX Style OS (OSX, Linux, BSD):
+export MP_ACCESS_KEY=9ff2af788834439b83ae6692f34ea5e5
+export MP_SECRET_KEY=6323354e200a451dba319bc1b98ade59
+

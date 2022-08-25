@@ -1,0 +1,8 @@
+
+Unity Simple Game Client Example
+
+This sample represents your game client which will be distributed to players. Here it is a very simple client
+which connects to the matchmaker and asks for a game. When the matchmaker receives enough players and has allocated
+a match it will then tell this client where to connect to.
+
+Once connected this game client will stay connected until the match end, and then exit.
