@@ -82,20 +82,23 @@ func main() {
 
 	// Continuously try to get a token, and then make an authenticated call. Reuse token and refresh if needed.
 	for {
-		time.Sleep(10 * time.Second)
+		// You Example just getting the bearer token as a string.
 		t, err := te.BearerToken()
 		if err != nil {
 			log.Println("failed to get bearer token", err)
+			time.Sleep(10 * time.Second)
 			continue
 		}
-		fmt.Println("Using token", t[:25], "...", t[len(t)-25:])
+		fmt.Println("Retrieved token", t[:25], "...", t[len(t)-25:])
 
+		// Example of populating the Authorization header on a request.
 		err = ExampleAuthenticatedCall(te, projectID, environmentId, fleetID)
 		if err != nil {
 			log.Println("failed to authenticate multiplay call", err)
+			time.Sleep(10 * time.Second)
 			continue
 		}
 		fmt.Println("Successfully authed call")
-
+		time.Sleep(10 * time.Second)
 	}
 }

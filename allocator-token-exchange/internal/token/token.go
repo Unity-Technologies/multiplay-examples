@@ -29,9 +29,7 @@ type Token struct {
 
 // uggTokenExchange is the request body for the token exchange.
 type uggTokenExchange struct {
-	ApiKeyPublicIdentifier string   `json:"apiKeyPublicIdentifier"`
-	Secret                 string   `json:"secret"`
-	Scopes                 []string `json:"scopes"`
+	Scopes []string `json:"scopes"`
 }
 
 // uggTokenExchange is the returned body for the token exchange.
@@ -55,9 +53,7 @@ func (te *Token) RefreshToken() error {
 	}
 
 	content, err := json.Marshal(&uggTokenExchange{
-		ApiKeyPublicIdentifier: te.accessKey,
-		Secret:                 te.secretKey,
-		Scopes:                 []string{},
+		Scopes: []string{},
 	})
 	if err != nil {
 		return fmt.Errorf("%w: marshal token exchange", err)
@@ -68,6 +64,7 @@ func (te *Token) RefreshToken() error {
 	q.Add("environmentId", te.environmentID)
 	req.URL.RawQuery = q.Encode()
 	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(te.accessKey, te.secretKey)
 	resp, err := c.Do(req)
 	if err != nil {
 		return fmt.Errorf("%w: do token exchange", err)
