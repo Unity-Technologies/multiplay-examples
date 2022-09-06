@@ -22,4 +22,12 @@ Component Name: stretchr/testify
 
 License Type: "MIT"
 
-[logrus License](https://github.com/stretchr/testify/blob/master/LICENSE)
+[testify License](https://github.com/stretchr/testify/blob/master/LICENSE)
+
+--- 
+
+Component Name: golang-jwt/jwt
+
+License Type: "MIT"
+
+[golang-jwt License](https://github.com/golang-jwt/jwt/blob/main/LICENSE)
