@@ -15,7 +15,15 @@ import (
 )
 
 // parseFlags parses the supported flags and returns the values supplied to these flags.
-func parseFlags(args []string) (config string, log string, logFile string, port uint, queryPort uint, tracebackLevel string, err error) {
+func parseFlags(args []string) (
+	config string,
+	log string,
+	logFile string,
+	port uint,
+	queryPort uint,
+	tracebackLevel string,
+	err error,
+) {
 	dir, _ := os.UserHomeDir()
 	f := flag.FlagSet{}
 
@@ -24,7 +32,12 @@ func parseFlags(args []string) (config string, log string, logFile string, port 
 	f.StringVar(&logFile, "logFile", "", "path to the log file to write to")
 	f.UintVar(&port, "port", 8000, "port for the game server to bind to")
 	f.UintVar(&queryPort, "queryport", 8001, "port for the query endpoint to bind to")
-	f.StringVar(&tracebackLevel, "tracebackLevel", "", "the amount of detail printed by the runtime prints before exiting due to an unrecovered panic")
+	f.StringVar(
+		&tracebackLevel,
+		"tracebackLevel",
+		"",
+		"the amount of detail printed by the runtime prints before exiting due to an unrecovered panic",
+	)
 
 	err = f.Parse(args)
 
