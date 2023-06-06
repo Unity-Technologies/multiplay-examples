@@ -2,11 +2,11 @@ This package contains third-party software components governed by the license(s)
 
 ---
 
-Component Name: fsnotify/fsnotify
+Component Name: unity-gaming-services-go-sdk
 
-License Type: "BSD 3-clause"
+License Type: "MIT"
 
-[fsnotify License](https://github.com/fsnotify/fsnotify/blob/master/LICENSE)
+[unity-gaming-services-go License](https://github.com/Unity-Technologies/unity-gaming-services-go-sdk/blob/main/LICENSE)
 
 ---
 
@@ -23,11 +23,3 @@ Component Name: stretchr/testify
 License Type: "MIT"
 
 [testify License](https://github.com/stretchr/testify/blob/master/LICENSE)
-
---- 
-
-Component Name: golang-jwt/jwt
-
-License Type: "MIT"
-
-[golang-jwt License](https://github.com/golang-jwt/jwt/blob/main/LICENSE)
