@@ -1,85 +1,52 @@
 package game
 
 import (
+	"fmt"
 	"net"
-	"net/http"
 	"sync"
 
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/config"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/event"
-	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/pkg/proto"
+	"github.com/Unity-Technologies/unity-gaming-services-go-sdk/game-server-hosting/server"
+	mserver "github.com/Unity-Technologies/unity-gaming-services-go-sdk/matchmaker/server"
 	"github.com/sirupsen/logrus"
 )
 
 type (
 	// Game represents an instance of a game running on this server.
 	Game struct {
-		// cfgFile is the file path this game uses to read its configuration from
-		cfgFile string
+		*mserver.Server
 
 		// clients is a map of connected game clients:
 		// - key:   string        - the remote IP of the client
 		// - value: *net.TCPConn  - a connection object representing the client connection
 		clients sync.Map
 
-		// gameEvents is a channel of game events, for example allocated / deallocated
-		gameEvents chan event.Event
-
-		// gameBind is a TCP listener representing a fake game server
-		gameBind *net.TCPListener
-
-		// internalEventProcessorReady is a channel that, when written to,
-		// indicates that the internal event processor is ready.
-		internalEventProcessorReady chan struct{}
-
 		// done is a channel that when closed indicates the server is going
 		// away.
 		done chan struct{}
 
+		// gameBind is a TCP listener representing a fake game server
+		gameBind *net.TCPListener
+
 		// logger handles structured logging for this game
 		logger *logrus.Entry
-
-		// port is the port number the game TCP server will listen on
-		port uint
-
-		// queryBind is a UDP endpoint which responds to game queries
-		queryBind *udpBinding
-
-		// queryPort is the port number the game query server will listen on
-		queryPort uint
-
-		// queryProto is an implementation of an interface which responds on a particular
-		// query format, for example sqp, tf2e, etc.
-		queryProto proto.QueryResponder
-
-		// state represents current game states which are applicable to an incoming query,
-		// for example current players, map name
-		state *proto.QueryState
-
-		// backfillParams represents urls and query params used to keep alive backfill tickets.
-		backfillParams *proto.BackfillParams
 
 		// wg handles synchronising termination of all active
 		// goroutines this game manages
 		wg sync.WaitGroup
-
-		// httpClient is an http client that is used to retrieve the token from the payload
-		// proxy as well as send backfill ticket approvals to the matchmaker
-		httpClient *http.Client
 	}
 )
 
 // New creates a new game, configured with the provided configuration file.
-func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClient *http.Client) (*Game, error) {
+func New(logger *logrus.Logger) (*Game, error) {
+	s, err := mserver.New(server.TypeAllocation)
+	if err != nil {
+		return nil, err
+	}
+
 	g := &Game{
-		cfgFile:                     configPath,
-		gameEvents:                  make(chan event.Event, 1),
-		logger:                      logger,
-		internalEventProcessorReady: make(chan struct{}, 1),
-		done:                        make(chan struct{}, 1),
-		port:                        port,
-		queryPort:                   queryPort,
-		httpClient:                  httpClient,
+		Server: s,
+		logger: logger.WithField("allocation_uuid", ""),
+		done:   make(chan struct{}),
 	}
 
 	return g, nil
@@ -87,98 +54,50 @@ func New(logger *logrus.Entry, configPath string, port, queryPort uint, httpClie
 
 // Start starts the game, opening the configured query and game ports.
 func (g *Game) Start() error {
-	c, err := config.NewConfigFromFile(g.cfgFile)
-	if err != nil {
-		return err
-	}
-
-	if err = g.switchQueryProtocol(*c); err != nil {
-		return err
-	}
+	g.logger.Info("starting")
 
 	go g.processEvents()
-	go g.processInternalEvents()
 
-	// Wait until the internal event processor is ready.
-	<-g.internalEventProcessorReady
-
-	g.logger.
-		WithField("port", g.port).
-		WithField("queryport", g.queryPort).
-		WithField("proto", c.QueryType).
-		Info("server started")
-
-	// Handle the app starting with an allocation
-	if c.AllocatedUUID != "" {
-		g.gameEvents <- event.Event{
-			Type:   event.Allocated,
-			Config: c,
-		}
+	if err := g.Server.Start(); err != nil {
+		return fmt.Errorf("error starting server: %w", err)
 	}
 
-	return nil
+	g.logger.Info("started")
+
+	defer func() {
+		g.logger.Info("stopping")
+
+		close(g.done)
+		g.wg.Wait()
+
+		g.logger.Info("stopped")
+	}()
+
+	return g.Server.WaitUntilTerminated()
 }
 
-// Stop stops the game and closes all connections.
-func (g *Game) Stop() error {
-	g.logger.Info("stopping")
-
-	if g.queryBind != nil {
-		g.queryBind.Close()
-	}
-
-	g.gameEvents <- event.Event{Type: event.Deallocated}
-	close(g.done)
-	g.wg.Wait()
-	g.logger.Info("stopped")
-
-	return nil
-}
-
-// handleQuery handles responding to query commands on an incoming UDP port.
-func handleQuery(q proto.QueryResponder, logger *logrus.Entry, wg *sync.WaitGroup, b *udpBinding, readBuffer int) {
-	size := 16
-	if readBuffer > 0 {
-		size = readBuffer
-	}
-
-	wg.Add(1)
-	defer wg.Done()
+// processEvents handles processing events for the operation of the
+// game server, such as allocating and deallocating the server.
+func (g *Game) processEvents() {
+	g.wg.Add(1)
+	defer g.wg.Done()
 
 	for {
-		buf := make([]byte, size)
-		_, to, err := b.Read(buf)
-		if err != nil {
-			if b.IsDone() {
-				return
-			}
+		select {
+		case id := <-g.OnAllocate():
+			g.allocated(id)
 
-			logger.
-				WithField("error", err.Error()).
-				Error("read from udp")
+		case <-g.OnDeallocate():
+			g.deallocated()
 
-			continue
-		}
+		case err := <-g.OnError():
+			g.logger.WithError(err).Error("error maintaining server")
 
-		resp, err := q.Respond(to.String(), buf)
-		if err != nil {
-			logger.
-				WithField("error", err.Error()).
-				Error("error responding to query")
+		case c := <-g.OnConfigurationChanged():
+			g.logger.WithField("config", c).Info("configuration has changed")
 
-			continue
-		}
-
-		if _, err = b.Write(resp, to); err != nil {
-			if b.IsDone() {
-				return
-			}
-
-			logger.
-				WithField("error", err.Error()).
-				Error("error writing response")
-
-			continue
+		case <-g.done:
+			return
 		}
 	}
 }
