@@ -14,6 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const defaultMaxPlayers = 4
+
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(allocationID string) {
 	g.logger = g.logger.WithField("allocation_uuid", allocationID)
@@ -21,6 +23,9 @@ func (g *Game) allocated(allocationID string) {
 	c := g.Config()
 	port, _ := c.Port.Int64()
 	maxPlayers, _ := strconv.ParseInt(c.Extra["maxPlayers"], 10, 32)
+	if maxPlayers == 0 {
+		maxPlayers = defaultMaxPlayers
+	}
 
 	g.Server.SetMaxPlayers(int32(maxPlayers))
 	g.Server.SetServerName(fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID))
