@@ -23,10 +23,10 @@ archives:
         format: zip
 dockers:
   - image_templates:
-      - docker.io/lukepowlett051/simple-game-server-go:latest
-      - docker.io/lukepowlett051/simple-game-server-go:v{{ .Major }}
-      - docker.io/lukepowlett051/simple-game-server-go:v{{ .Major }}.{{ .Minor }}
-      - docker.io/lukepowlett051/simple-game-server-go:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+      - docker.io/unitymultiplay/simple-game-server-go:latest
+      - docker.io/unitymultiplay/simple-game-server-go:v{{ .Major }}
+      - docker.io/unitymultiplay/simple-game-server-go:v{{ .Major }}.{{ .Minor }}
+      - docker.io/unitymultiplay/simple-game-server-go:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}
 checksum:
   name_template: 'checksums.txt'
 snapshot:
