@@ -58,6 +58,8 @@ func (g *Game) launchGame(port int64) {
 		return
 	}
 
+	go simulatePlayers()
+
 	g.gameBind = gs
 
 	for {
@@ -73,6 +75,25 @@ func (g *Game) launchGame(port int64) {
 		}
 
 		go g.handleClient(client)
+	}
+}
+
+func simulatePlayers() {
+	var startPlayers int = 30
+	i := 0
+	//Setup baseline of players
+	for i < startPlayers {
+		s.Server.PlayerJoined()
+		i++
+	}
+	for {
+		var incrementOrDecrement = rand.Intn(1)
+		if incrementOrDecrement == 0 {
+			s.Server.PlayerLeft()
+		} else {
+			s.Server.PlayerJoined()
+		}
+		time.Sleep(rand.Intn(20) * time.Second)
 	}
 }
 
