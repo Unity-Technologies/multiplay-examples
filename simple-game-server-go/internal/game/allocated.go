@@ -86,18 +86,18 @@ func (g *Game) simulatePlayers() {
 		g.Server.PlayerJoined()
 	}
 	for {
-		j, err := rand.Int(rand.Reader, big.NewInt(2))
+		j, err := rand.Int(rand.Reader, big.NewInt(5))
 		if err != nil {
 			return
 		}
 
 		if float32(j.Int64()) == 0 {
-			g.Server.PlayerLeft()
+			currentPlayers := g.Server.PlayerLeft()
 			g.logger.WithFields(logrus.Fields{
 				"current_players": currentPlayers,
 			}).Info("simulated client left")
 		} else {
-			g.Server.PlayerJoined()
+			currentPlayers := g.Server.PlayerJoined()
 			g.logger.WithFields(logrus.Fields{
 				"current_players": currentPlayers,
 			}).Info("simulated client joined")
