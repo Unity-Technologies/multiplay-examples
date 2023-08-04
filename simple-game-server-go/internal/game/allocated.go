@@ -87,7 +87,7 @@ func (g *Game) simulatePlayers() {
 		g.Server.PlayerJoined()
 	}
 	for {
-		j, err := rand.Int(rand.Reader, big.NewInt(1))
+		j, err := rand.Int(rand.Reader, big.NewInt(2))
 		if err != nil {
 			return
 		}
