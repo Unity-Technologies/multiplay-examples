@@ -93,8 +93,14 @@ func (g *Game) simulatePlayers() {
 
 		if float32(j.Int64()) == 0 {
 			g.Server.PlayerLeft()
+			g.logger.WithFields(logrus.Fields{
+				"current_players": currentPlayers,
+			}).Info("simulated client left")
 		} else {
 			g.Server.PlayerJoined()
+			g.logger.WithFields(logrus.Fields{
+				"current_players": currentPlayers,
+			}).Info("simulated client joined")
 		}
 
 		time.Sleep(time.Second * 20)
