@@ -81,7 +81,6 @@ func (g *Game) launchGame(port int64) {
 const startPlayers = 30
 
 func (g *Game) simulatePlayers() {
-
 	// Setup baseline of players
 	for i := 0; i < startPlayers; i++ {
 		g.Server.PlayerJoined()
