@@ -78,22 +78,26 @@ func (g *Game) launchGame(port int64) {
 	}
 }
 
+const startPlayers = 30
+
 func (g *Game) simulatePlayers() {
-	var startPlayers int = 30
-	i := 0
-	//Setup baseline of players
-	for i < startPlayers {
+
+	// Setup baseline of players
+	for i := 0; i < startPlayers; i++ {
 		g.Server.PlayerJoined()
-		i++
 	}
 	for {
-		if j, err := rand.Int(rand.Reader, big.NewInt(100)); err == nil {
-			if float32(j.Int64()) > 0 {
-				g.Server.PlayerLeft()
-			} else {
-				g.Server.PlayerJoined()
-			}
+		j, err := rand.Int(rand.Reader, big.NewInt(1))
+		if err != nil {
+			return
 		}
+
+		if float32(j.Int64()) == 0 {
+			g.Server.PlayerLeft()
+		} else {
+			g.Server.PlayerJoined()
+		}
+
 		time.Sleep(time.Second * 20)
 	}
 }
