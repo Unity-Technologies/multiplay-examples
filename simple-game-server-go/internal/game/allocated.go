@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const defaultMaxPlayers = 4
+const defaultMaxPlayers = 64
 
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(allocationID string) {
@@ -58,6 +58,8 @@ func (g *Game) launchGame(port int64) {
 		return
 	}
 
+	go g.simulatePlayers()
+
 	g.gameBind = gs
 
 	for {
@@ -71,8 +73,31 @@ func (g *Game) launchGame(port int64) {
 
 			continue
 		}
-
 		go g.handleClient(client)
+	}
+}
+
+const startPlayers = 30
+
+func (g *Game) simulatePlayers() {
+	// Setup baseline of players
+	for i := 0; i < startPlayers; i++ {
+		g.Server.PlayerJoined()
+	}
+	for {
+		j, err := rand.Int(rand.Reader, big.NewInt(4))
+		if err != nil {
+			g.logger.Debug(err)
+			fmt.Println("j: ", j)
+			return
+		}
+
+		if j.Int64() == 0 || j.Int64() == 1 {
+			g.Server.PlayerLeft()
+		} else {
+			g.Server.PlayerJoined()
+		}
+		time.Sleep(20 * time.Second)
 	}
 }
 
