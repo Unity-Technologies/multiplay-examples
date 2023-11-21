@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -60,6 +61,8 @@ func (g *Game) launchGame(port int64) {
 
 	g.gameBind = gs
 
+	go g.readyForPlayers()
+
 	for {
 		client, err := g.acceptClient(g.gameBind)
 		if err != nil {
@@ -118,5 +121,19 @@ func (g *Game) handleClient(client *net.TCPConn) {
 		if _, err := client.Write(buf); err != nil {
 			return
 		}
+	}
+}
+
+// readyForPlayers waits 20s then reports that the game is ready for players.
+//
+// This is to simulate a game server waiting for any initialization to complete
+// before reporting that it is ready to accept players.
+func (g *Game) readyForPlayers() {
+	g.logger.Info("ready for players")
+
+	time.Sleep(20 * time.Second)
+
+	if err := g.ReadyForPlayers(context.TODO()); err != nil {
+		g.logger.WithError(err).Error("reporting ready for players")
 	}
 }

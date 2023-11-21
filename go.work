@@ -4,3 +4,5 @@ use (
 	./allocator-token-exchange
 	./simple-game-server-go
 )
+
+replace github.com/Unity-Technologies/unity-gaming-services-go-sdk => ../unity-gaming-services-go-sdk/
