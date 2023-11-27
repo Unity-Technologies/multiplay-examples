@@ -15,7 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const defaultMaxPlayers = 4
+const (
+	defaultMaxPlayers   = 4
+	defaultReadyTimeout = 20 * time.Second
+)
 
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(allocationID string) {
@@ -131,7 +134,18 @@ func (g *Game) handleClient(client *net.TCPConn) {
 func (g *Game) readyForPlayers() {
 	g.logger.Info("ready for players")
 
-	time.Sleep(20 * time.Second)
+	timeout := defaultReadyTimeout
+
+	if g.Config().Extra["readyTimeout"] != "" {
+		t, err := time.ParseDuration(g.Config().Extra["readyTimeout"])
+		if err != nil {
+			g.logger.WithError(err).Error("parsing ready timeout")
+		} else {
+			timeout = t
+		}
+	}
+
+	time.Sleep(timeout)
 
 	if err := g.ReadyForPlayers(context.TODO()); err != nil {
 		g.logger.WithError(err).Error("reporting ready for players")
