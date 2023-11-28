@@ -131,6 +131,10 @@ func (g *Game) handleClient(client *net.TCPConn) {
 //
 // This is to simulate a game server waiting for any initialization to complete
 // before reporting that it is ready to accept players.
+//
+// You can optionally configure the timeout by setting the "readyTimeout"
+// configuration variable in the build configuration to a duration string
+// recognised by `time.ParseDuration`, e.g. "30s".
 func (g *Game) readyForPlayers() {
 	g.logger.Info("ready for players")
 
