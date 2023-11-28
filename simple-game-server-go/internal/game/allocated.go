@@ -149,9 +149,15 @@ func (g *Game) readyForPlayers() {
 		}
 	}
 
-	time.Sleep(timeout)
+	select {
+	case <-time.After(timeout):
+		g.logger.Info("ready timeout elapsed, reporting ready")
+	case <-g.OnDeallocate():
+		g.logger.Info("server was deallocated, don't report ready")
+		return
+	}
 
-	if err := g.ReadyForPlayers(context.TODO()); err != nil {
+	if err := g.ReadyForPlayers(context.Background()); err != nil {
 		g.logger.WithError(err).Error("reporting ready for players")
 	}
 }
