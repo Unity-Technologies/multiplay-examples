@@ -23,6 +23,7 @@ const (
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(allocationID string) {
 	g.logger = g.logger.WithField("allocation_uuid", allocationID)
+	g.alloc = make(chan struct{})
 
 	c := g.Config()
 	port, _ := c.Port.Int64()
@@ -152,12 +153,15 @@ func (g *Game) readyForPlayers() {
 	select {
 	case <-time.After(timeout):
 		g.logger.Info("ready timeout elapsed, reporting ready")
-	case <-g.OnDeallocate():
-		g.logger.Info("server was deallocated, don't report ready")
+	case <-g.alloc:
+		g.logger.Info("server no longer allocated, don't report ready")
 		return
 	}
 
-	if err := g.ReadyForPlayers(context.Background()); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := g.ReadyForPlayers(ctx); err != nil {
 		g.logger.WithError(err).Error("reporting ready for players")
 	}
 }
