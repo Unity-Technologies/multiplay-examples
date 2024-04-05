@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -14,11 +15,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const defaultMaxPlayers = 4
+const (
+	defaultMaxPlayers   = 4
+	defaultReadyTimeout = 20 * time.Second
+)
 
 // allocated starts a game after the server has been allocated.
 func (g *Game) allocated(allocationID string) {
 	g.logger = g.logger.WithField("allocation_uuid", allocationID)
+	g.alloc = make(chan struct{})
 
 	c := g.Config()
 	port, _ := c.Port.Int64()
@@ -59,6 +64,8 @@ func (g *Game) launchGame(port int64) {
 	}
 
 	g.gameBind = gs
+
+	go g.readyForPlayers()
 
 	for {
 		client, err := g.acceptClient(g.gameBind)
@@ -118,5 +125,43 @@ func (g *Game) handleClient(client *net.TCPConn) {
 		if _, err := client.Write(buf); err != nil {
 			return
 		}
+	}
+}
+
+// readyForPlayers waits 20s then reports that the game is ready for players.
+//
+// This is to simulate a game server waiting for any initialization to complete
+// before reporting that it is ready to accept players.
+//
+// You can optionally configure the timeout by setting the "readyTimeout"
+// configuration variable in the build configuration to a duration string
+// recognised by `time.ParseDuration`, e.g. "30s".
+func (g *Game) readyForPlayers() {
+	g.logger.Info("ready for players")
+
+	timeout := defaultReadyTimeout
+
+	if g.Config().Extra["readyTimeout"] != "" {
+		t, err := time.ParseDuration(g.Config().Extra["readyTimeout"])
+		if err != nil {
+			g.logger.WithError(err).Error("parsing ready timeout")
+		} else {
+			timeout = t
+		}
+	}
+
+	select {
+	case <-time.After(timeout):
+		g.logger.Info("ready timeout elapsed, reporting ready")
+	case <-g.alloc:
+		g.logger.Info("server no longer allocated, don't report ready")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := g.ReadyForPlayers(ctx); err != nil {
+		g.logger.WithError(err).Error("reporting ready for players")
 	}
 }

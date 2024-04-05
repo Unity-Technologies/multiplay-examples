@@ -20,6 +20,10 @@ type (
 		// - value: *net.TCPConn  - a connection object representing the client connection
 		clients sync.Map
 
+		// alloc is a channel that is opened when the server is allocated
+		// and closed when deallocated
+		alloc chan struct{}
+
 		// done is a channel that when closed indicates the server is going
 		// away.
 		done chan struct{}

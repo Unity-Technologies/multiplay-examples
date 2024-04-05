@@ -6,6 +6,7 @@ import (
 
 // deallocated stops the currently running game, if one is running.
 func (g *Game) deallocated() {
+	close(g.alloc)
 	g.disconnectAllClients()
 	if err := g.gameBind.Close(); err != nil {
 		g.logger.WithError(err).Error("error closing game")

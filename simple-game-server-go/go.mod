@@ -3,7 +3,7 @@ module github.com/Unity-Technologies/multiplay-examples/simple-game-server-go
 go 1.20
 
 require (
-	github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.3.1
+	github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.5.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 )

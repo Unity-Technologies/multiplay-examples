@@ -1,0 +1,6 @@
+go 1.20
+
+use (
+	./allocator-token-exchange
+	./simple-game-server-go
+)
