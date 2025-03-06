@@ -4,6 +4,8 @@ github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.3.1 h1:piV2hAtoc5k
 github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.3.1/go.mod h1:WgDwSafd4alCs+HdK0z+7htBVZIe+LUrLQgM738WDd0=
 github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.5.0 h1:nH2XUCCx1BAV6hXhjSaIA+rOrzX2CRPz4/Yx/sZ26Do=
 github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.5.0/go.mod h1:WgDwSafd4alCs+HdK0z+7htBVZIe+LUrLQgM738WDd0=
+github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.5.4 h1:2KQYKCx44tEurLU5TlhmPhvKyvXo5QyBiTEfFqiC25g=
+github.com/Unity-Technologies/unity-gaming-services-go-sdk v0.5.4/go.mod h1:WgDwSafd4alCs+HdK0z+7htBVZIe+LUrLQgM738WDd0=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/centrifugal/centrifuge v0.21.1 h1:7saDm953rxzke4YfzoNekxKnpckmdTnz8EzbSribwos=
 github.com/centrifugal/centrifuge-go v0.8.4 h1:X23NuXmXTqdlp6PNrZLj1bWcPpehVq5u8LxuM2+NrIA=
