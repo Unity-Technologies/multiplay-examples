@@ -96,6 +96,7 @@ func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 
 	g.clients.Store(client.RemoteAddr(), client)
 	currentPlayers := g.Server.PlayerJoined()
+	
 	g.logger.WithFields(logrus.Fields{
 		"client_ip":       client.RemoteAddr().String(),
 		"current_players": currentPlayers,
@@ -128,6 +129,41 @@ func (g *Game) handleClient(client *net.TCPConn) {
 	}
 }
 
+
+func (g *Game) FakeCCU() {
+	tick := time.NewTicker(15 * time.Second)
+	defer tick.Stop()
+
+	increasing := true
+	minFakeCCU := int32(1)
+	maxFakeCCU := int32(10)
+	fakeCCU := minFakeCCU
+
+	for {
+		select {
+		case <-tick.C:
+			
+			// make a fake sine graph
+
+			if fakeCCU >= maxFakeCCU {
+				increasing = false
+			} else if fakeCCU <= minFakeCCU {
+				increasing = true
+			}
+
+			if increasing {
+				fakeCCU++
+			} else {
+				fakeCCU--
+			}
+
+			g.logger.Info(fmt.Sprintf("Bens Fake CCU: %d", fakeCCU))
+			g.Server.SetCurrentPlayers(fakeCCU)
+
+		}
+	}
+}
+
 // readyForPlayers waits 20s then reports that the game is ready for players.
 //
 // This is to simulate a game server waiting for any initialization to complete
@@ -137,7 +173,10 @@ func (g *Game) handleClient(client *net.TCPConn) {
 // configuration variable in the build configuration to a duration string
 // recognised by `time.ParseDuration`, e.g. "30s".
 func (g *Game) readyForPlayers() {
-	g.logger.Info("ready for players")
+	g.logger.Info("ben ready for playerzzz")
+
+	// g.Server.SetCurrentPlayers(0)
+	go g.FakeCCU()	// call function as go routine
 
 	timeout := defaultReadyTimeout
 
