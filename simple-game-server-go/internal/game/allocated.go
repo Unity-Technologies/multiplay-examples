@@ -2,16 +2,16 @@ package game
 
 import (
 	"context"
-	"crypto/rand"
+	// "crypto/rand"
 	"errors"
 	"fmt"
-	"math/big"
+	// "math/big"
 	"net"
 	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/Unity-Technologies/unity-gaming-services-go-sdk/game-server-hosting/server"
+	// "github.com/Unity-Technologies/unity-gaming-services-go-sdk/game-server-hosting/server"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,12 +37,12 @@ func (g *Game) allocated(allocationID string) {
 	g.Server.SetGameType(c.Extra["gameType"])
 	g.Server.SetGameMap(c.Extra["map"])
 
-	// Set a random metric, if using SQP.
-	if c.QueryType == server.QueryProtocolSQP {
-		if i, err := rand.Int(rand.Reader, big.NewInt(100)); err == nil {
-			_ = g.SetMetric(0, float32(i.Int64()))
-		}
-	}
+	// // Set a random metric, if using SQP.
+	// if c.QueryType == server.QueryProtocolSQP {
+	// 	if i, err := rand.Int(rand.Reader, big.NewInt(100)); err == nil {
+	// 		_ = g.SetMetric(0, float32(i.Int64()))
+	// 	}
+	// }
 
 	go g.launchGame(port)
 }
