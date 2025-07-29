@@ -1,42 +1,53 @@
+version: "2"
 run:
   concurrency: 4
-  deadline: 5m
-
-linters-settings:
-  cyclop:
-    max-complexity: 20
-  gocyclo:
-    min-complexity: 20
-
 linters:
-  enable-all: true
+  default: all
   disable:
     - exhaustive
     - exhaustruct
-    - exhaustivestruct
+    - forcetypeassert
     - funlen
     - gochecknoglobals
+    - godox
     - gomoddirectives
-    - interfacer
-    - maligned
-    - gomnd
+    - ireturn
+    - lll
+    - mnd
     - nestif
+    - nlreturn
     - paralleltest
-    - scopelint
+    - tagliatelle
     - testpackage
     - tparallel
+    - varnamelen
     - wrapcheck
     - wsl
-    - godox
-    - forcetypeassert
-    - nlreturn
-    - tagliatelle
-    - varnamelen
-    - ireturn
-    - varcheck
-    - deadcode
-    - golint
-    - ifshort
-    - structcheck
-    - nosnakecase
-    - lll
+  settings:
+    cyclop:
+      max-complexity: 20
+    gocyclo:
+      min-complexity: 20
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
