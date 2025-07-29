@@ -58,7 +58,7 @@ func Test_logWritersFromTargets(t *testing.T) {
 		// Test that we can write to it (should not panic)
 		n, err := writer.Write([]byte("test"))
 		require.NoError(t, err)
-		require.Greater(t, n, 0)
+		require.Positive(t, n)
 	})
 
 	t.Run("stderr target", func(t *testing.T) {
@@ -70,7 +70,7 @@ func Test_logWritersFromTargets(t *testing.T) {
 		// Test that we can write to it (should not panic)
 		n, err := writer.Write([]byte("test"))
 		require.NoError(t, err)
-		require.Greater(t, n, 0)
+		require.Positive(t, n)
 	})
 
 	t.Run("file target", func(t *testing.T) {
@@ -97,7 +97,7 @@ func Test_logWritersFromTargets(t *testing.T) {
 		t.Parallel()
 		tempDir := t.TempDir()
 		testDir := filepath.Join(tempDir, "logs")
-		require.NoError(t, os.MkdirAll(testDir, 0755))
+		require.NoError(t, os.MkdirAll(testDir, 0o755))
 		logger := logrus.New()
 
 		writer := logWritersFromTargets(testDir, "", logger)
@@ -192,7 +192,7 @@ func Test_logWritersFromTargets(t *testing.T) {
 		require.NotNil(t, writer)
 		n, err := writer.Write([]byte("test"))
 		require.NoError(t, err)
-		require.Greater(t, n, 0)
+		require.Positive(t, n)
 	})
 
 	t.Run("empty targets defaults to stdout", func(t *testing.T) {
@@ -205,7 +205,7 @@ func Test_logWritersFromTargets(t *testing.T) {
 		require.NotNil(t, writer)
 		n, err := writer.Write([]byte("test"))
 		require.NoError(t, err)
-		require.Greater(t, n, 0)
+		require.Positive(t, n)
 	})
 }
 

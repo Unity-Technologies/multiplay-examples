@@ -22,7 +22,6 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.52.2
           working-directory: './simple-game-server-go'
           skip-go-installation: true
       - name: Build
