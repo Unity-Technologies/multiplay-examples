@@ -76,7 +76,7 @@ func splitAndTrim(s string) []string {
 	for _, p := range filepath.SplitList(s) {
 		for _, t := range splitComma(p) {
 			trimmed := filepath.Clean(t)
-			if trimmed != "" {
+			if trimmed != "" && trimmed != "." {
 				parts = append(parts, trimmed)
 			}
 		}
@@ -88,8 +88,8 @@ func splitAndTrim(s string) []string {
 func splitComma(s string) []string {
 	res := make([]string, 0)
 	for _, t := range strings.Split(s, ",") {
-		trimmed := filepath.Clean(t)
-		if trimmed != "" {
+		trimmed := strings.TrimSpace(t)
+		if trimmed != "" && trimmed != "." {
 			res = append(res, trimmed)
 		}
 	}
