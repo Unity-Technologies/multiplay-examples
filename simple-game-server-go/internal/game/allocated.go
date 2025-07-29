@@ -32,10 +32,10 @@ func (g *Game) allocated(allocationID string) {
 		maxPlayers = defaultMaxPlayers
 	}
 
-	g.Server.SetMaxPlayers(int32(maxPlayers))
-	g.Server.SetServerName(fmt.Sprintf("simple-game-server-go - %s", c.AllocatedUUID))
-	g.Server.SetGameType(c.Extra["gameType"])
-	g.Server.SetGameMap(c.Extra["map"])
+	g.SetMaxPlayers(int32(maxPlayers))
+	g.SetServerName("simple-game-server-go - " + c.AllocatedUUID)
+	g.SetGameType(c.Extra["gameType"])
+	g.SetGameMap(c.Extra["map"])
 
 	// Set a random metric, if using SQP.
 	if c.QueryType == server.QueryProtocolSQP {
@@ -95,7 +95,7 @@ func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 	}
 
 	g.clients.Store(client.RemoteAddr(), client)
-	currentPlayers := g.Server.PlayerJoined()
+	currentPlayers := g.PlayerJoined()
 	g.logger.WithFields(logrus.Fields{
 		"client_ip":       client.RemoteAddr().String(),
 		"current_players": currentPlayers,
@@ -108,7 +108,7 @@ func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 func (g *Game) handleClient(client *net.TCPConn) {
 	defer func() {
 		g.clients.Delete(client.RemoteAddr())
-		currentPlayers := g.Server.PlayerLeft()
+		currentPlayers := g.PlayerLeft()
 		g.logger.WithFields(logrus.Fields{
 			"client_ip":       client.RemoteAddr().String(),
 			"current_players": currentPlayers,

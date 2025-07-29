@@ -77,7 +77,7 @@ func (g *Game) Start() error {
 		g.logger.Info("stopped")
 	}()
 
-	return g.Server.WaitUntilTerminated()
+	return g.WaitUntilTerminated()
 }
 
 // processEvents handles processing events for the operation of the

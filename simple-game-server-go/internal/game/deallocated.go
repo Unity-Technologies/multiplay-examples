@@ -19,7 +19,7 @@ func (g *Game) deallocated() {
 
 // disconnectAllClients disconnects all remaining clients connected to the game server.
 func (g *Game) disconnectAllClients() {
-	g.clients.Range(func(key interface{}, value interface{}) bool {
+	g.clients.Range(func(_, value any) bool {
 		client, ok := value.(*net.TCPConn)
 		if !ok {
 			return true

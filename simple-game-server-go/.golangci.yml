@@ -37,9 +37,9 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - third_party$
       - builtin$
       - examples$
+      - third_party$
 formatters:
   enable:
     - gci
@@ -49,6 +49,6 @@ formatters:
   exclusions:
     generated: lax
     paths:
-      - third_party$
       - builtin$
       - examples$
+      - third_party$

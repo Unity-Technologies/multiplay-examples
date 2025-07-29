@@ -8,9 +8,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/Unity-Technologies/multiplay-examples/simple-game-server-go/internal/game"
+	"github.com/sirupsen/logrus"
 )
 
 // parseFlags parses the supported flags and returns the values supplied to these flags.
