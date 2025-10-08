@@ -87,7 +87,6 @@ func (g *Game) launchGame(port int64) {
 // acceptClient accepts a new TCP connection and updates internal state.
 func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 	client, err := server.AcceptTCP()
-
 	if err != nil {
 		return nil, err
 	}
