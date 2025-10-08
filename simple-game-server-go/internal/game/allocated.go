@@ -53,7 +53,6 @@ func (g *Game) allocated(allocationID string) {
 func (g *Game) launchGame(port int64) {
 	g.logger.Info("allocated")
 	addr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", port))
-
 	if err != nil {
 		g.logger.WithError(err).Error("error resolving TCP address")
 		return
@@ -150,7 +149,6 @@ func (g *Game) readyForPlayers() {
 
 	if g.Config().Extra["readyTimeout"] != "" {
 		t, err := time.ParseDuration(g.Config().Extra["readyTimeout"])
-
 		if err != nil {
 			g.logger.WithError(err).Error("parsing ready timeout")
 		} else {

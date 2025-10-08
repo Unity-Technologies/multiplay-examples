@@ -105,7 +105,6 @@ func main() {
 	logger.SetFormatter(&logrus.JSONFormatter{})
 
 	logTargets, logFile, tracebackLevel, err := parseFlags(os.Args[1:])
-
 	if err != nil {
 		logger.WithError(err).Fatal("error parsing flags")
 	}
