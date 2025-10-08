@@ -70,7 +70,6 @@ func (g *Game) launchGame(port int64) {
 
 	for {
 		client, err := g.acceptClient(g.gameBind)
-
 		if err != nil {
 			if errors.Is(err, syscall.EINVAL) {
 				g.logger.Debug("server closed")
