@@ -28,6 +28,7 @@ func (g *Game) allocated(allocationID string) {
 	c := g.Config()
 	port, _ := c.Port.Int64()
 	maxPlayers, _ := strconv.ParseInt(c.Extra["maxPlayers"], 10, 32)
+
 	if maxPlayers == 0 {
 		maxPlayers = defaultMaxPlayers
 	}
@@ -52,12 +53,14 @@ func (g *Game) allocated(allocationID string) {
 func (g *Game) launchGame(port int64) {
 	g.logger.Info("allocated")
 	addr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf(":%d", port))
+
 	if err != nil {
 		g.logger.WithError(err).Error("error resolving TCP address")
 		return
 	}
 
 	gs, err := net.ListenTCP("tcp4", addr)
+
 	if err != nil {
 		g.logger.WithError(err).Error("error listening on TCP port")
 		return
@@ -69,6 +72,7 @@ func (g *Game) launchGame(port int64) {
 
 	for {
 		client, err := g.acceptClient(g.gameBind)
+
 		if err != nil {
 			if errors.Is(err, syscall.EINVAL) {
 				g.logger.Debug("server closed")
@@ -86,6 +90,7 @@ func (g *Game) launchGame(port int64) {
 // acceptClient accepts a new TCP connection and updates internal state.
 func (g *Game) acceptClient(server *net.TCPListener) (*net.TCPConn, error) {
 	client, err := server.AcceptTCP()
+
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +119,10 @@ func (g *Game) handleClient(client *net.TCPConn) {
 			"current_players": currentPlayers,
 		}).Info("client disconnected")
 	}()
+
 	for {
 		buf := make([]byte, 16)
+
 		if _, err := client.Read(buf); err != nil {
 			return
 		}
@@ -143,6 +150,7 @@ func (g *Game) readyForPlayers() {
 
 	if g.Config().Extra["readyTimeout"] != "" {
 		t, err := time.ParseDuration(g.Config().Extra["readyTimeout"])
+
 		if err != nil {
 			g.logger.WithError(err).Error("parsing ready timeout")
 		} else {
