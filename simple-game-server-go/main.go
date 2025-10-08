@@ -117,7 +117,6 @@ func main() {
 	logger.Out = logWritersFromTargets(logTargets, logFile, logger)
 
 	g, err := game.New(logger)
-
 	if err != nil {
 		logger.WithError(err).Fatal("error creating game handler")
 	}

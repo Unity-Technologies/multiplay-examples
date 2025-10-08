@@ -59,7 +59,6 @@ func (g *Game) launchGame(port int64) {
 	}
 
 	gs, err := net.ListenTCP("tcp4", addr)
-
 	if err != nil {
 		g.logger.WithError(err).Error("error listening on TCP port")
 		return
