@@ -34,6 +34,7 @@ func parseFlags(args []string) (string, string, string, error) {
 // If no valid targets are provided, it defaults to writing to stdout.
 func logWritersFromTargets(logTargets string, logFile string, logger *logrus.Logger) io.Writer {
 	targets := make([]io.Writer, 0)
+
 	for _, t := range splitAndTrim(logTargets) {
 		switch t {
 		case "stdout":
@@ -54,6 +55,7 @@ func logWritersFromTargets(logTargets string, logFile string, logger *logrus.Log
 			targets = append(targets, f)
 		}
 	}
+
 	// logFile takes precedence
 	if logFile != "" {
 		f, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
@@ -63,6 +65,7 @@ func logWritersFromTargets(logTargets string, logFile string, logger *logrus.Log
 			logger.WithError(err).Warning("could not open log file for writing")
 		}
 	}
+
 	if len(targets) == 0 {
 		return os.Stdout
 	}
@@ -72,6 +75,7 @@ func logWritersFromTargets(logTargets string, logFile string, logger *logrus.Log
 // splitAndTrim splits a string by the OS-specific path list separator and trims each part.
 func splitAndTrim(s string) []string {
 	parts := make([]string, 0)
+
 	for _, p := range filepath.SplitList(s) {
 		for _, t := range splitComma(p) {
 			trimmed := filepath.Clean(t)
@@ -86,6 +90,7 @@ func splitAndTrim(s string) []string {
 // splitComma splits a string by commas and trims each part, returning a slice of non-empty strings.
 func splitComma(s string) []string {
 	res := make([]string, 0)
+
 	for _, t := range strings.Split(s, ",") {
 		trimmed := strings.TrimSpace(t)
 		if trimmed != "" && trimmed != "." {

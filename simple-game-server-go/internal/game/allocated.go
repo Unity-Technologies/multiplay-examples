@@ -28,6 +28,7 @@ func (g *Game) allocated(allocationID string) {
 	c := g.Config()
 	port, _ := c.Port.Int64()
 	maxPlayers, _ := strconv.ParseInt(c.Extra["maxPlayers"], 10, 32)
+
 	if maxPlayers == 0 {
 		maxPlayers = defaultMaxPlayers
 	}
@@ -114,8 +115,10 @@ func (g *Game) handleClient(client *net.TCPConn) {
 			"current_players": currentPlayers,
 		}).Info("client disconnected")
 	}()
+
 	for {
 		buf := make([]byte, 16)
+
 		if _, err := client.Read(buf); err != nil {
 			return
 		}
